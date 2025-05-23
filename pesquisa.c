@@ -1,6 +1,4 @@
-#include <iostream>
 #include <stdio.h>
-using namespace std;
 
 #define ITENSPAGINA 4
 #define MAXTABELA 25
@@ -59,7 +57,7 @@ int main () {
     int cont;
     // abre o arquivo de dados
     if ((arq = fopen("dados.bin","rb")) == NULL) {
-        cout << "Erro na abertura do arquivo\n"; 
+        printf("Erro na abertura do arquivo\n"); 
         return 0;
     }
     // gera a tabela de índice das páginas
@@ -71,10 +69,10 @@ int main () {
  
     y.chave = 91299; // substitua pela chave que deseja procurar
     if (pesquisa(tabela, cont ,&y, arq)) {
-        cout << "Registro encontrado!\n";
-        cout << "Chave: " << y.chave << "\n";
+        printf("Registro encontrado!\n");
+        printf("Chave: %d\n", y.chave);
     } else {
-        cout << "Registro nao encontrado.\n";
+        printf("Registro nao encontrado.\n");
     }
 
 } 
