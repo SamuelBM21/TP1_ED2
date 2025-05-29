@@ -1,18 +1,25 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 #define ITENSPAGINA 1000
 #define MAXTABELA 1000
 
 // definição de um item do arquivo de dados
 typedef struct{
-    int chave;
+    long long chave;
     long long dado1;
     char dado2[1000];
     char dado3[5000];
 }Registro;
 
-int pesquisa (int tab[], int tam, Registro* reg, FILE *arq) {
-    Registro pagina[ITENSPAGINA];
+int pesquisa (long long tab[], int tam, Registro* reg, FILE *arq) {
+    // Aloca dinamicamente o array de páginas
+    Registro* pagina = (Registro*)malloc(ITENSPAGINA * sizeof(Registro));
+    if (pagina == NULL) {
+        printf("Erro na alocação de memória para página\n");
+        return -1; // Retorna -1 para indicar erro de memória
+    }
+
     int i, quantitens;
     long desloc;
     // procura pela página onde o item pode se encontrar
@@ -20,7 +27,10 @@ int pesquisa (int tab[], int tam, Registro* reg, FILE *arq) {
     while (i < tam && tab[i] <= reg->chave) i++;
     // caso a chave desejada seja menor que a 1a chave, o item
     // não existe no arquivo
-    if (i == 0) return 0;
+    if (i == 0) {
+        free(pagina);
+        return 0;
+    }
     else {
         // a ultima página pode não estar completa
         if (i < tam) quantitens = ITENSPAGINA;
@@ -35,28 +45,31 @@ int pesquisa (int tab[], int tam, Registro* reg, FILE *arq) {
         // lê a página desejada do arquivo
         desloc = (i-1)*ITENSPAGINA*sizeof(Registro);
         fseek (arq, desloc, SEEK_SET);
-        fread (&pagina, sizeof(Registro), quantitens, arq);
+        fread (pagina, sizeof(Registro), quantitens, arq);
 
         // pesquisa sequencial na página lida
         for (i=0; i < quantitens; i++)
             if (pagina[i].chave == reg->chave) {
-                *reg = pagina[i]; 
+                *reg = pagina[i];
+                free(pagina);
                 return 1;
             }
+
+        free(pagina);
         return 0;
     }
-} 
+}
 
 int main () {
-    int tabela[MAXTABELA];
-    FILE *arq; 
+    long long tabela[MAXTABELA];
+    FILE *arq;
     Registro x[ITENSPAGINA];
     Registro y;
     int cont;
 
     // abre o arquivo de dados
     if ((arq = fopen("dados.bin","rb")) == NULL) {
-        printf("Erro na abertura do arquivo\n"); 
+        printf("Erro na abertura do arquivo\n");
         return 0;
     }
 
@@ -70,19 +83,21 @@ int main () {
 
     // gera a tabela de índice das páginas
     cont = 0;
-    while (fread(&x, sizeof(Registro), ITENSPAGINA, arq) > 0) {
-        printf("%d  ", cont);
-        tabela[cont]= x[0].chave;
+    while (fread(x, sizeof(Registro), ITENSPAGINA, arq) > 0) {
+        tabela[cont] = x[0].chave;
         cont++;
     }
 
     fseek(arq, 0, SEEK_SET);
     y.chave = 91299; // substitua pela chave que deseja procurar
-    if (pesquisa(tabela, cont ,&y, arq)) {
+    if (pesquisa(tabela, cont, &y, arq)) {
         printf("Registro encontrado!\n");
-        printf("Chave: %d\n", y.chave);
+        printf("Chave: %lld\n", y.chave);
     } else {
         printf("Registro nao encontrado.\n");
     }
 
-} 
+    fclose(arq);
+
+    return 0;
+}
