@@ -4,7 +4,7 @@
 #include <time.h>
 
 typedef struct{
-    int chave;
+    long long chave;
     long long dado1;
     char dado2[1000];
     char dado3[5000];
@@ -19,10 +19,10 @@ int main(){
         return 1;
     }
     
-    int numLinhas = 1000;
+    long long numLinhas = 1000000;
     Registro reg;
 
-    for(int i = 0; i < numLinhas ; i++){
+    for(long long i = 0; i < numLinhas ; i++){
         reg.chave = i;
         reg.dado1 = rand() * (long long)rand();
         strcpy(reg.dado2, " ");
