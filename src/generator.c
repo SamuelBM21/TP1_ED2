@@ -2,27 +2,21 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include "generator.h"
+#include "register.h"
 
-typedef struct{
-    long long chave;
-    long long dado1;
-    char dado2[1000];
-    char dado3[5000];
-}Registro;
-
-int main(){
-    FILE *arq = fopen("dados.bin","wb");
+int generateFile(long long numLines, char nameFile[]){
+    FILE *arq = fopen(nameFile,"wb");
     srand(time(NULL));
 
     if (!arq) {
         printf("Erro ao abrir arquivos.\n");
-        return 1;
+        return 0;
     }
-    
-    long long numLinhas = 1000000;
+
     Registro reg;
 
-    for(long long i = 0; i < numLinhas ; i++){
+    for(long long i = 0; i < numLines ; i++){
         reg.chave = i;
         reg.dado1 = rand() * (long long)rand();
         strcpy(reg.dado2, " ");
@@ -31,5 +25,5 @@ int main(){
     }
 
     fclose(arq);
-    return 0;
+    return 1;
 }

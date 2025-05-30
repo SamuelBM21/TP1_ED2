@@ -5,8 +5,8 @@
 #ifndef B_TREE_H
 #define B_TREE_H
 
-#define M 2;
-#define MM 2*M;
+#define M 5
+#define MM 2*M
 typedef long TipoChave;
 
 typedef struct TipoRegistro{
@@ -19,9 +19,9 @@ typedef struct TipoPagina{
     short n;
     TipoRegistro r[MM];
     TipoApontador p[MM+1];
-}
+}TipoPagina;
 
-void Inicializa(TipoApontador arvore);
+void Inicializa(TipoApontador *arvore);
 int Pesquisa(TipoRegistro *x, TipoApontador ap);
 void Imprime(TipoApontador arvore);
 void InsereNaPagina(TipoApontador ap, TipoRegistro reg, TipoApontador apDir);

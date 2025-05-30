@@ -1,10 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <b_tree.h>
+#include "../include/b_tree.h"
 
 
-void Inicializa(TipoApontador Arvore){
-    Arvore=NULL;
+void Inicializa(TipoApontador *arvore){
+    *arvore=NULL;
 }
 
 int Pesquisa(TipoRegistro *x, TipoApontador ap){
@@ -18,8 +18,8 @@ int Pesquisa(TipoRegistro *x, TipoApontador ap){
         return 1;
     }
 
-    if(x->chave < ap->r[i-1].chave) Pesquisa(x, ap->p[i-1]);
-    else Pesquisa(x, ap->p[i]);
+    if(x->chave < ap->r[i-1].chave) return Pesquisa(x, ap->p[i-1]);
+    else return Pesquisa(x, ap->p[i]);
 }
 
 void Imprime(TipoApontador arvore){
@@ -33,7 +33,7 @@ void Imprime(TipoApontador arvore){
 }
 void InsereNaPagina(TipoApontador ap, TipoRegistro reg, TipoApontador apDir){
     int k= ap->n;
-    short naoAchouPosicao = k>0;
+    short naoAchouPosicao = (k>0);
 
     while(naoAchouPosicao){
         if(reg.chave>=ap->r[k-1].chave){
@@ -56,7 +56,7 @@ void Ins(TipoRegistro reg, TipoApontador ap, short *cresceu, TipoRegistro *regRe
     long i=1, j;
     TipoApontador apTemp;
     if(ap == NULL){
-        *creaceu = 1;
+        *cresceu = 1;
         *regRetorno=reg;
         *apRetorno=NULL;
         return;
@@ -68,7 +68,7 @@ void Ins(TipoRegistro reg, TipoApontador ap, short *cresceu, TipoRegistro *regRe
         return;
     }
 
-    if(reg.chave<ap->r[i-1].chave) i--:
+    if(reg.chave<ap->r[i-1].chave) i--;
     Ins(reg, ap->p[i], cresceu, regRetorno, apRetorno);
     if(!*cresceu) return;
     if(ap->n < MM){
@@ -77,7 +77,7 @@ void Ins(TipoRegistro reg, TipoApontador ap, short *cresceu, TipoRegistro *regRe
         return;
     }
 
-    apTemp=(TipoApontador)malloc(sizeof(TipoRegistro));
+    apTemp=(TipoApontador)malloc(sizeof(TipoPagina));
     apTemp->n=0;
     apTemp->p[0]=NULL;
 
@@ -85,9 +85,9 @@ void Ins(TipoRegistro reg, TipoApontador ap, short *cresceu, TipoRegistro *regRe
         InsereNaPagina(apTemp, ap->r[MM-1], ap->p[MM]);
         ap->n--;
         InsereNaPagina(ap, *regRetorno, *apRetorno);
-    }else
+    }else {
         InsereNaPagina(apTemp, *regRetorno, *apRetorno);
-
+    }
     for(j=M+2; j<=MM; j++) {
         InsereNaPagina(apTemp, ap->r[j - 1], ap->p[j]);
     }
@@ -105,8 +105,8 @@ void Insere(TipoRegistro reg, TipoApontador *ap){
     Ins(reg, *ap, &cresceu, &regRetorno, &apRetorno);
     if(cresceu){
         apTemp = (TipoPagina*)malloc(sizeof(TipoPagina));
-        apTemp->=1;
-        apTemp->r[0]=regRetorno
+        apTemp->n=1;
+        apTemp->r[0]=regRetorno;
         apTemp->p[1]=apRetorno;
         apTemp->p[0]=*ap;
         *ap = apTemp;
