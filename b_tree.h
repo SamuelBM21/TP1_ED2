@@ -5,8 +5,8 @@
 #ifndef B_TREE_H
 #define B_TREE_H
 
-#define MM 2;
-#define M 1;
+#define M 2;
+#define MM 2*M;
 typedef long TipoChave;
 
 typedef struct TipoRegistro{
