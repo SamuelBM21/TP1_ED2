@@ -10,7 +10,62 @@ typedef struct{
     long long dado1;
     char dado2[1000];
     char dado3[5000];
+    long long esq;
+    long long dir;
 }Registro;
+
+int insereArvBin(Registro inserido, FILE* arq){
+    Registro* atual = (Registro*) malloc(sizeof(Registro));
+    long long posicaoinserido = ftell(arq);
+    fseek(arq, 0, SEEK_SET);
+
+    if (posicaoinserido == 0){
+        inserido.esq = inserido.dir = -1;
+        fwrite(&inserido, sizeof(Registro), 1, arq);
+        free(atual);
+        return 1;
+    }
+
+    long long posicaoatual = 0;
+
+    while (1){
+        posicaoatual = ftell(arq);
+        fread(atual, sizeof(Registro), 1, arq);
+        if (inserido.chave > atual->chave){
+            if (atual->dir == -1){
+                inserido.dir = inserido.esq = -1;
+                atual->dir = posicaoinserido;
+                fseek(arq, posicaoatual, 0);
+                fwrite(atual, sizeof(Registro), 1, arq);
+                fseek(arq, posicaoinserido, SEEK_SET);
+                fwrite(&inserido, sizeof(Registro), 1, arq);
+                free(atual);
+                return 1;
+            }
+            fseek(arq, atual->dir* sizeof(Registro), 0);
+            continue;
+        }
+        if (inserido.chave < atual->chave){
+            if (atual->esq == -1){
+                inserido.dir = inserido.esq = -1;
+                atual->esq = posicaoinserido;
+                fseek(arq, posicaoatual, 0);
+                fwrite(atual, sizeof(Registro), 1, arq);
+                fseek(arq, posicaoinserido, SEEK_SET);
+                fwrite(&inserido, sizeof(Registro), 1, arq);
+                free(atual);
+                return 1;
+            }
+            fseek(arq, atual->esq * sizeof(Registro), 0);
+            continue;
+        }
+        if (inserido.chave == atual->chave){
+            free(atual);
+            return 0;
+        }
+    }
+    return 0;
+}
 
 int pesquisa (long long tab[], int tam, Registro* reg, FILE *arq) {
     // Aloca dinamicamente o array de páginas
