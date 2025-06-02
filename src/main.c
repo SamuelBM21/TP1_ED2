@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>  // Para ftruncate e fileno
+#include <sys/types.h>  // Para ftruncate
 #include "../include/b_tree.h"
 #include "../include/register.h"
 #include "../include/file_binary_tree.h"
@@ -18,9 +20,9 @@ void sequencialSearch();
 
 int main () {
     int opcao;
-    generateFile(1000000, DESCENDINGFILE,ORDER_RANDOM) ? printf("Arquivo aleatório gerado com sucesso\n") : printf("Falha ao gerar arquivo\n");
-    generateFile(1000000, ASCENDINGFILE,ORDER_ASCENDING) ? printf("Arquivo ascendente gerado com sucesso\n") : printf("Falha ao gerar arquivo\n");
-    generateFile(1000000, RANDOMFILE,ORDER_DESCENDING) ? printf("Arquivo descendente gerado com sucesso\n") : printf("Falha ao gerar arquivo\n");
+    //generateFile(1000000, DESCENDINGFILE,ORDER_RANDOM) ? printf("Arquivo aleatório gerado com sucesso\n") : printf("Falha ao gerar arquivo\n");
+    //generateFile(1000000, ASCENDINGFILE,ORDER_ASCENDING) ? printf("Arquivo ascendente gerado com sucesso\n") : printf("Falha ao gerar arquivo\n");
+    //generateFile(1000000, RANDOMFILE,ORDER_DESCENDING) ? printf("Arquivo descendente gerado com sucesso\n") : printf("Falha ao gerar arquivo\n");
     do {
         printf("\n==== Gerenciador de Arquivos ====\n");
         printf("1. Árvore binária\n");
@@ -62,7 +64,7 @@ void binaryTree() {
     }
 
     // Abre o arquivo da árvore binária para escrita
-    FILE *arqArvore = fopen(BINARYTREEFILE, "wb");
+    FILE *arqArvore = fopen(BINARYTREEFILE, "r+b");
     if (arqArvore == NULL) {
         printf("Erro ao abrir o arquivo da árvore binária\n");
         fclose(arqComum);
@@ -79,18 +81,25 @@ void binaryTree() {
     while (fread(&registro, sizeof(Registro), 1, arqComum) == 1) {
         // Move para o final do arquivo da árvore para inserir o novo registro
         fseek(arqArvore, 0, SEEK_END);
-
         registro.dir=-1;
         registro.esq=-1;
+        long insertPos = ftell(arqArvore);
+
+        // Escreve o registro na posição final (isso garante espaço)
+        fwrite(&registro, sizeof(Registro), 1, arqArvore);
+        fflush(arqArvore);
+
+        fseek(arqArvore, 0, SEEK_SET);
 
         if (insereArvBin(registro, arqArvore)) {
             registrosInseridos++;
         } else {
             registrosDuplicados++;
+            ftruncate(fileno(arqArvore), insertPos);
         }
 
         // Mostra progresso a cada 100000 registros
-        if ((registrosInseridos + registrosDuplicados) % 10 == 0) {
+        if ((registrosInseridos + registrosDuplicados) % 10000 == 0) {
             printf("Processados: %d registros\n", registrosInseridos + registrosDuplicados);
         }
     }
