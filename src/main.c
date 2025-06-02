@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "../include/b_tree.h"
 #include "../include/register.h"
 #include "../include/file_binary_tree.h"
@@ -6,38 +7,37 @@
 #include "../include/sequencial_search.h"
 
 // Prototypes das funções (você pode implementá-las depois)
-#define COMMONFILE "dados.bin"
-#define BINARYTREEFILE "filebinarytree.bin"
+#define ASCENDINGFILE "dados1.bin"
+#define DESCENDINGFILE "dados2.bin"
+#define RANDOMFILE "dados3.bin"
+#define BINARYTREEFILE "binarytree.bin"
 
-void generateCommonFile();
-void generateFileBinaryTree();
-void generateBTree();
+void binaryTree();
+void bTree();
 void sequencialSearch();
 
 int main () {
     int opcao;
-
+    generateFile(1000000, DESCENDINGFILE,ORDER_RANDOM) ? printf("Arquivo aleatório gerado com sucesso\n") : printf("Falha ao gerar arquivo\n");
+    generateFile(1000000, ASCENDINGFILE,ORDER_ASCENDING) ? printf("Arquivo ascendente gerado com sucesso\n") : printf("Falha ao gerar arquivo\n");
+    generateFile(1000000, RANDOMFILE,ORDER_DESCENDING) ? printf("Arquivo descendente gerado com sucesso\n") : printf("Falha ao gerar arquivo\n");
     do {
         printf("\n==== Gerenciador de Arquivos ====\n");
-        printf("1. Gerar arquivo comum\n");
-        printf("2. Gerar arquivo de árvore binária\n");
-        printf("3. Gerar árvore B\n");
-        printf("4. Busca sequencial em arquivo comum\n");
+        printf("1. Árvore binária\n");
+        printf("2. Árvore B\n");
+        printf("3. Busca sequencial\n");
         printf("0. Sair\n");
         printf("Escolha uma opção: ");
         scanf("%d", &opcao);
 
         switch (opcao) {
             case 1:
-                generateCommonFile();
+                binaryTree();
                 break;
             case 2:
-                generateFileBinaryTree();
+                bTree();
                 break;
             case 3:
-                generateBTree();
-                break;
-            case 4:
                 sequencialSearch();
                 break;
             case 0:
@@ -50,22 +50,12 @@ int main () {
     return 0;
 }
 
-void generateCommonFile() {
-    printf(">> Gerando arquivo comum...\n");
-    generateFile(1000000, COMMONFILE) ? printf("Arquivo gerado com sucesso\n") : printf("Falha ao gerar arquivo\n");
-}
 
-void generateFileBinaryTree() {
+void binaryTree() {
     printf(">> Gerando arquivo de árvore binária...\n");
 
-    // Cria o arquivo da árvore binária
-    if (!generateBinaryTreeFile(BINARYTREEFILE)) {
-        printf("\nNão foi possível gerar o arquivo\n");
-        return;
-    }
-
     // Abre o arquivo comum para leitura
-    FILE *arqComum = fopen(COMMONFILE, "rb");
+    FILE *arqComum = fopen(RANDOMFILE, "rb");
     if (arqComum == NULL) {
         printf("Erro ao abrir o arquivo comum para leitura\n");
         return;
@@ -115,11 +105,11 @@ void generateFileBinaryTree() {
     fclose(arqArvore);
 }
 
-void generateBTree() {
+void bTree() {
     printf(">> Gerando arquivo de árvore B...\n\n");
 
     // Abre o arquivo da árvore binária para escrita
-    FILE *arqComum = fopen(COMMONFILE, "rb");
+    FILE *arqComum = fopen(RANDOMFILE, "rb");
     if (arqComum == NULL) {
         printf("Erro ao abrir o arquivo comum para leitura\n");
         return;
@@ -152,7 +142,8 @@ void generateBTree() {
             printf("NÃO ENCONTRADA\n");
         }
     }
-
+    Libera(&arv);
+    fclose(arqComum);
 }
 
 void sequencialSearch() {
@@ -169,18 +160,10 @@ void sequencialSearch() {
     int cont;
 
     // abre o arquivo de dados
-    if ((arq = fopen(COMMONFILE,"rb")) == NULL) {
+    if ((arq = fopen(ASCENDINGFILE,"rb")) == NULL) {
         printf("Erro na abertura do arquivo\n");
         free(tabela);
     }
-
-    /*   long file_size = ftell(arq);
-      long expected_size = 1000000 * sizeof(Registro);
-      printf("Tamanho do arquivo: %ld bytes (esperado: %ld)\n", file_size, expected_size);
-      if (file_size != expected_size) {
-          printf("ERRO: Tamanho do arquivo incorreto!\n");
-          return 1;
-      } */
 
     // gera a tabela de índice das páginas
     cont = 0;

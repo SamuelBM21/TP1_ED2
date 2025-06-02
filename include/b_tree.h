@@ -22,6 +22,7 @@ typedef struct TipoPagina{
 }TipoPagina;
 
 void Inicializa(TipoApontador *arvore);
+void Libera(TipoApontador *ap);
 int Pesquisa(TipoRegistro *x, TipoApontador ap);
 void Imprime(TipoApontador arvore);
 void InsereNaPagina(TipoApontador ap, TipoRegistro reg, TipoApontador apDir);

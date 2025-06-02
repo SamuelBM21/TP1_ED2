@@ -2,6 +2,16 @@
 #include <stdlib.h>
 #include "../include/b_tree.h"
 
+void Libera(TipoApontador *ap) {
+    if (*ap == NULL) return;
+
+    for (int i = 0; i <= (*ap)->n; i++) {
+        Libera(&((*ap)->p[i]));
+    }
+
+    free(*ap);
+    *ap = NULL;
+}
 
 void Inicializa(TipoApontador *arvore){
     *arvore=NULL;
@@ -31,6 +41,7 @@ void Imprime(TipoApontador arvore){
         i++;
     }
 }
+
 void InsereNaPagina(TipoApontador ap, TipoRegistro reg, TipoApontador apDir){
     int k= ap->n;
     short naoAchouPosicao = (k>0);
