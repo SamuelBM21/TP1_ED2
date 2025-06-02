@@ -1,5 +1,18 @@
-dados1.bin
-dados2.bin
-dados3.bin
-filebinarytree.bin
+# Binários e arquivos temporários
+*.bin
+*.o
+*.exe
+*.out
+*.log
 
+# Diretórios de build
+/build/
+/bin/
+
+# Ignorar backups do editor
+*~
+*.swp
+*.tmp
+
+# VSCode
+.vscode/
