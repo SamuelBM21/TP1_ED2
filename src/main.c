@@ -14,57 +14,69 @@
 #define RANDOMFILE "dados3.bin"
 #define BINARYTREEFILE "binarytree.bin"
 
-void binaryTree();
-void bTree();
-void sequencialSearch();
+void binaryTree(int, int, long long chave);
+void bTree(int, int, long long chave);
+void sequencialSearch(int, int , long long chave);
 
-int main () {
-    int opcao;
+int main (int argc, char* argv[]) {
+    if (argc != 5 && argc != 6)
+        printf("Não foi passado o número mínimo de parâmetros. \n");
+    int metodo = atoi(argv[1]);  // converte para int
+    int quantidade = atoi(argv[2]);
+    int situacao = atoi(argv[3]);
+    long long chave = atoi(argv[4]);
     //generateFile(1000000, DESCENDINGFILE,ORDER_RANDOM) ? printf("Arquivo aleatório gerado com sucesso\n") : printf("Falha ao gerar arquivo\n");
     //generateFile(1000000, ASCENDINGFILE,ORDER_ASCENDING) ? printf("Arquivo ascendente gerado com sucesso\n") : printf("Falha ao gerar arquivo\n");
     //generateFile(1000000, RANDOMFILE,ORDER_DESCENDING) ? printf("Arquivo descendente gerado com sucesso\n") : printf("Falha ao gerar arquivo\n");
-    do {
-        printf("\n==== Gerenciador de Arquivos ====\n");
-        printf("1. Árvore binária\n");
-        printf("2. Árvore B\n");
-        printf("3. Busca sequencial\n");
-        printf("0. Sair\n");
-        printf("Escolha uma opção: ");
-        scanf("%d", &opcao);
-
-        switch (opcao) {
-            case 1:
-                binaryTree();
-                break;
-            case 2:
-                bTree();
-                break;
-            case 3:
-                sequencialSearch();
-                break;
-            case 0:
-                printf("Saindo...\n");
-                break;
-            default:
-                printf("Opção inválida. Tente novamente.\n");
-        }
-    } while (opcao != 0);
+    switch (metodo) {
+        case 1:
+            sequencialSearch(quantidade,situacao, chave);
+            break;
+        case 2:
+            binaryTree(quantidade,situacao, chave);
+            break;
+        case 3:
+            bTree(quantidade, situacao, chave);
+            break;
+        default:
+            printf("Opção inválida. Tente novamente.\n");
+    }
     return 0;
 }
 
 
-void binaryTree() {
+void binaryTree(int qtd, int situ, long long chave) {
+    FILE *arqComum;
     printf(">> Gerando arquivo de árvore binária...\n");
-
-    // Abre o arquivo comum para leitura
-    FILE *arqComum = fopen(RANDOMFILE, "rb");
-    if (arqComum == NULL) {
-        printf("Erro ao abrir o arquivo comum para leitura\n");
-        return;
+    switch (situ) {
+        case 1:
+            arqComum = fopen(ASCENDINGFILE, "rb");
+            if (arqComum == NULL) {
+                printf("Erro ao abrir o arquivo para leitura\n");
+                return;
+            }
+            break;
+        case 2:
+            arqComum = fopen(DESCENDINGFILE, "rb");
+            if (arqComum == NULL) {
+                printf("Erro ao abrir o arquivo para leitura\n");
+                return;
+            }
+        break;
+        case 3:
+            arqComum = fopen(RANDOMFILE, "rb");
+            if (arqComum == NULL) {
+                printf("Erro ao abrir o arquivo para leitura\n");
+                return;
+            }
+            break;
+        default:
+            printf("Opção de situacao de arquivo inválida.\n");
+            return;
     }
 
     // Abre o arquivo da árvore binária para escrita
-    FILE *arqArvore = fopen(BINARYTREEFILE, "r+b");
+    FILE *arqArvore = fopen(BINARYTREEFILE, "w+b");
     if (arqArvore == NULL) {
         printf("Erro ao abrir o arquivo da árvore binária\n");
         fclose(arqComum);
@@ -78,7 +90,7 @@ void binaryTree() {
     printf("Lendo registros do arquivo comum e inserindo na árvore binária...\n");
 
     // Lê cada registro do arquivo comum e insere na árvore binária
-    while (fread(&registro, sizeof(Registro), 1, arqComum) == 1) {
+    while ((fread(&registro, sizeof(Registro), 1, arqComum) == 1) && registrosInseridos < qtd) {
         // Move para o final do arquivo da árvore para inserir o novo registro
         fseek(arqArvore, 0, SEEK_END);
         registro.dir=-1;
@@ -114,48 +126,68 @@ void binaryTree() {
     fclose(arqArvore);
 }
 
-void bTree() {
+void bTree(int qtd, int situ, long long chave) {
     printf(">> Gerando arquivo de árvore B...\n\n");
-
+    FILE *arqComum;
     // Abre o arquivo da árvore binária para escrita
-    FILE *arqComum = fopen(RANDOMFILE, "rb");
-    if (arqComum == NULL) {
-        printf("Erro ao abrir o arquivo comum para leitura\n");
-        return;
+    switch (situ) {
+        case 1:
+            arqComum = fopen(ASCENDINGFILE, "rb");
+            if (arqComum == NULL) {
+                printf("Erro ao abrir o arquivo para leitura\n");
+                return;
+            }
+            break;
+        case 2:
+            arqComum = fopen(DESCENDINGFILE, "rb");
+            if (arqComum == NULL) {
+                printf("Erro ao abrir o arquivo para leitura\n");
+                return;
+            }
+        break;
+        case 3:
+            arqComum = fopen(RANDOMFILE, "rb");
+            if (arqComum == NULL) {
+                printf("Erro ao abrir o arquivo para leitura\n");
+                return;
+            }
+            break;
+        default:
+            printf("Opção de situacao de arquivo inválida.\n");
+            return;
     }
 
+    int cont = 0;
     Registro registro;
     TipoApontador arv;
     Inicializa(&arv);
-
+    
     // Lê cada registro do arquivo comum e insere na árvore binária
 
-    while (fread(&registro, sizeof(Registro), 1, arqComum) == 1) {
+    while ((fread(&registro, sizeof(Registro), 1, arqComum) == 1) && cont < qtd) {
         TipoRegistro x;
         x.chave=registro.chave;
 
         Insere(x, &arv);
+        cont++;
     }
 
-    long long chavesTeste[] = {91299, 123456, 999999, 1, 500000, 750000};
+    TipoRegistro regPesquisa;
+    regPesquisa.chave = chave;
 
-    for (int i = 0; i < 6; i++) {
-        TipoRegistro regPesquisa;
-        regPesquisa.chave = chavesTeste[i];
+    printf("Pesquisando chave %lld: ", chave);
 
-        printf("Pesquisando chave %lld: ", chavesTeste[i]);
-
-        if (Pesquisa(&regPesquisa, arv)) {
-            printf("ENCONTRADA!\n");
-        } else {
-            printf("NÃO ENCONTRADA\n");
-        }
+    if (Pesquisa(&regPesquisa, arv)) {
+        printf("ENCONTRADA!\n");
+    } else {
+        printf("NÃO ENCONTRADA\n");
     }
+
     Libera(&arv);
     fclose(arqComum);
 }
 
-void sequencialSearch() {
+void sequencialSearch(int qtd, int situ, long long chave) {
     printf(">> Executando busca sequencial...\n");
 
     long long *tabela = (long long *) malloc(MAXTABELA * sizeof(long long));
@@ -163,27 +195,49 @@ void sequencialSearch() {
         printf("Erro na alocação de memória para tabela\n");
         exit(1);
     }
-    FILE *arq;
+
+    FILE *arqComum;
     Registro x[ITENSPAGINA];
     Registro y;
-    int cont;
+    int cont = 0;
 
     // abre o arquivo de dados
-    if ((arq = fopen(ASCENDINGFILE,"rb")) == NULL) {
-        printf("Erro na abertura do arquivo\n");
-        free(tabela);
+    switch (situ) {
+        case 1:
+            arqComum = fopen(ASCENDINGFILE, "rb");
+            if (arqComum == NULL) {
+                printf("Erro ao abrir o arquivo para leitura\n");
+                return;
+            }
+            while ((fread(x, sizeof(Registro), ITENSPAGINA, arqComum) > 0) && cont < qtd) {
+                tabela[cont] = x[0].chave;
+                cont++;
+            }
+        
+            break;
+        case 2:
+            arqComum = fopen(DESCENDINGFILE, "rb");
+            if (arqComum == NULL) {
+                printf("Erro ao abrir o arquivo para leitura\n");
+                return;
+            }
+            while ((fread(x, sizeof(Registro), ITENSPAGINA, arqComum) > 0) && cont < qtd) {
+                tabela[qtd - cont -1] = x[0].chave;
+                cont++;
+            }
+        break;
+        case 3:
+            printf("Esse método só funciona para arquivos ordenados.\n");
+            break;
+        default:
+            printf("Opção de situacao de arquivo inválida.\n");
+            return;
     }
 
-    // gera a tabela de índice das páginas
-    cont = 0;
-    while (fread(x, sizeof(Registro), ITENSPAGINA, arq) > 0) {
-        tabela[cont] = x[0].chave;
-        cont++;
-    }
+    fseek(arqComum, 0, SEEK_SET);
+    y.chave = chave;
 
-    fseek(arq, 0, SEEK_SET);
-    y.chave = 91299; // substitua pela chave que deseja procurar
-    if (pesquisa(tabela, cont, &y, arq)) {
+    if (pesquisa(tabela, cont, &y, arqComum)) {
         printf("Registro encontrado!\n");
         printf("Chave: %lld\n", y.chave);
     } else {
@@ -191,5 +245,5 @@ void sequencialSearch() {
     }
 
     free(tabela);
-    fclose(arq);
+    fclose(arqComum);
 }
