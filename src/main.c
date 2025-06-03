@@ -195,14 +195,19 @@ void bTree(int qtd, int situ, long long chave) {
 void sequencialSearch(int qtd, int situ, long long chave) {
     printf(">> Executando busca sequencial...\n");
 
-    long long *tabela = (long long *) malloc(MAXTABELA * sizeof(long long));
+    int itens_pagina = define_page_size(qtd);
+    int max_paginas = (qtd + itens_pagina - 1) / itens_pagina;
+
+    printf("%d IT %d MAX \n", itens_pagina, max_paginas);
+    long long *tabela = (long long *) malloc(max_paginas* sizeof(long long));
+
     if (tabela == NULL) {
         printf("Erro na alocação de memória para tabela\n");
         exit(1);
     }
 
     FILE *arqComum;
-    Registro x[ITENSPAGINA];
+    Registro x[itens_pagina];
     Registro y;
     int cont = 0;
 
@@ -214,26 +219,18 @@ void sequencialSearch(int qtd, int situ, long long chave) {
                 printf("Erro ao abrir o arquivo para leitura\n");
                 return;
             }
-            while ((fread(x, sizeof(Registro), ITENSPAGINA, arqComum) > 0) && cont < qtd) {
+            while ((fread(x, sizeof(Registro), itens_pagina, arqComum) > 0) && cont < max_paginas) {
                 tabela[cont] = x[0].chave;
                 cont++;
             }
         
             break;
         case 2:
-            arqComum = fopen(DESCENDINGFILE, "rb");
-            if (arqComum == NULL) {
-                printf("Erro ao abrir o arquivo para leitura\n");
-                return;
-            }
-            while ((fread(x, sizeof(Registro), ITENSPAGINA, arqComum) > 0) && cont < qtd) {
-                tabela[qtd - cont -1] = x[0].chave;
-                cont++;
-            }
-        break;
+            printf("Esse método só funciona para arquivos ordenados ascendentemente.\n");
+            return;
         case 3:
             printf("Esse método só funciona para arquivos ordenados.\n");
-            break;
+            return;
         default:
             printf("Opção de situacao de arquivo inválida.\n");
             return;
@@ -241,8 +238,8 @@ void sequencialSearch(int qtd, int situ, long long chave) {
 
     fseek(arqComum, 0, SEEK_SET);
     y.chave = chave;
-
-    if (pesquisa(tabela, cont, &y, arqComum)) {
+    
+    if (pesquisa(tabela, cont, itens_pagina, &y, arqComum)) {
         printf("Registro encontrado!\n");
         printf("Chave: %lld\n", y.chave);
     } else {

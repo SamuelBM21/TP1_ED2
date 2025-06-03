@@ -3,9 +3,42 @@
 #include "register.h"
 #include "sequencial_search.h"
 
-int pesquisa (long long tab[], int tam, Registro* reg, FILE *arq) {
+int define_page_size(int total_registros) {
+    if (total_registros <= 100)
+        return 10;
+    else if (total_registros <= 1000)
+        return 50;
+    else if (total_registros <= 10000)
+        return 100;
+    else if (total_registros <= 100000)
+        return 500;
+    else
+        return 1000;
+}
+
+int binary_search(Registro *pagina, int tamanho, long long chave, Registro *resultado) {
+    int esquerda = 0, direita = tamanho - 1;
+
+    while (esquerda <= direita) {
+        int meio = (esquerda + direita) / 2;
+
+        if (pagina[meio].chave == chave) {
+            *resultado = pagina[meio];
+            return 1; // Encontrado
+        } else if (pagina[meio].chave < chave) {
+            esquerda = meio + 1;
+        } else {
+            direita = meio - 1;
+        }
+    }
+
+    return 0; // Não encontrado
+}
+
+int pesquisa (long long tab[], int tam, int itens_pagina,  Registro* reg, FILE *arq) {
+    
     // Aloca dinamicamente o array de páginas
-    Registro* pagina = (Registro*)malloc(ITENSPAGINA * sizeof(Registro));
+    Registro* pagina = (Registro*)malloc(itens_pagina * sizeof(Registro));
     if (pagina == NULL) {
         printf("Erro na alocação de memória para página\n");
         exit(1);
@@ -24,30 +57,25 @@ int pesquisa (long long tab[], int tam, Registro* reg, FILE *arq) {
     }
     else {
         // a ultima página pode não estar completa
-        if (i < tam) quantitens = ITENSPAGINA;
+        if (i < tam) quantitens = itens_pagina;
         else {
             fseek (arq, 0, SEEK_END);
-            quantitens = (ftell(arq)/sizeof(Registro))%ITENSPAGINA;
+            quantitens = (ftell(arq)/sizeof(Registro))% itens_pagina;
             if(quantitens == 0){
-                quantitens = ITENSPAGINA;
+                quantitens = itens_pagina;
             }
         }
 
         // lê a página desejada do arquivo
-        desloc = (i-1)*ITENSPAGINA*sizeof(Registro);
+        desloc = (i-1)*itens_pagina*sizeof(Registro);
         fseek (arq, desloc, SEEK_SET);
         fread (pagina, sizeof(Registro), quantitens, arq);
 
         // pesquisa sequencial na página lida
-        for (i=0; i < quantitens; i++)
-            if (pagina[i].chave == reg->chave) {
-                *reg = pagina[i];
-                free(pagina);
-                return 1;
-            }
-
+        // pesquisa binária na página lida
+        int encontrado = binary_search(pagina, quantitens, reg->chave, reg);
         free(pagina);
-        return 0;
+        return encontrado;
     }
 }
 
