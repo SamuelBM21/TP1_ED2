@@ -87,7 +87,7 @@ void binaryTree(int qtd, int situ, long long chave) {
     int registrosInseridos = 0;
     int registrosDuplicados = 0;
 
-    printf("Lendo registros do arquivo comum e inserindo na árvore binária...\n");
+    printf("Lendo registros do arquivo e inserindo na árvore binária...\n");
 
     // Lê cada registro do arquivo comum e insere na árvore binária
     while ((fread(&registro, sizeof(Registro), 1, arqComum) == 1) && registrosInseridos < qtd) {

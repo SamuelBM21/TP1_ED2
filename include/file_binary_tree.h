@@ -1,7 +1,3 @@
-//
-// Created by obraganca on 5/30/25.
-//
-
 #include "register.h"
 
 #ifndef FILE_BINARY_TREE_H

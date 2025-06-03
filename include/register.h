@@ -1,12 +1,5 @@
-//
-// Created by obraganca on 5/30/25.
-//
-
 #ifndef REGISTER_H
 #define REGISTER_H
-
-#define ITENSPAGINA 1000
-#define MAXTABELA 1000
 
 
 typedef struct{

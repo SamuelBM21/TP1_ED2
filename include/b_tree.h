@@ -1,7 +1,3 @@
-//
-// Created by obraganca on 5/30/25.
-//
-
 #ifndef B_TREE_H
 #define B_TREE_H
 

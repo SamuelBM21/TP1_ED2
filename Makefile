@@ -13,7 +13,7 @@ SRCS := $(wildcard $(SRC_DIR)/*.c)
 OBJS := $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/%.o, $(SRCS))
 
 # Output executable
-TARGET := $(BIN_DIR)/app
+TARGET := $ pesquisa
 
 # Default rule
 all: $(TARGET)
