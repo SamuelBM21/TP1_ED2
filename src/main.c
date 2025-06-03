@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>  // Para ftruncate e fileno
-#include <sys/types.h>  // Para ftruncate
+//#include <unistd.h>  // Para ftruncate e fileno
+//#include <sys/types.h>  // Para ftruncate
 #include "../include/b_tree.h"
 #include "../include/register.h"
 #include "../include/file_binary_tree.h"
@@ -95,7 +95,7 @@ void binaryTree(int qtd, int situ, long long chave) {
         fseek(arqArvore, 0, SEEK_END);
         registro.dir=-1;
         registro.esq=-1;
-        long insertPos = ftell(arqArvore);
+        //long insertPos = ftell(arqArvore);
 
         // Escreve o registro na posição final (isso garante espaço)
         fwrite(&registro, sizeof(Registro), 1, arqArvore);
@@ -107,7 +107,7 @@ void binaryTree(int qtd, int situ, long long chave) {
             registrosInseridos++;
         } else {
             registrosDuplicados++;
-            ftruncate(fileno(arqArvore), insertPos);
+            //ftruncate(fileno(arqArvore), insertPos);
         }
 
         // Mostra progresso a cada 100000 registros
@@ -122,6 +122,11 @@ void binaryTree(int qtd, int situ, long long chave) {
         printf("Registros duplicados ignorados: %d\n", registrosDuplicados);
     }
 
+    printf("Procurando %lld na arvore binária\n", chave);
+    if(searchTreeBinary(chave, &registro))
+        printf("Registro encontrado: %lld\n", registro.chave);
+    else   
+        printf("Registro não encontrado\n");
     fclose(arqComum);
     fclose(arqArvore);
 }
