@@ -74,12 +74,13 @@ int searchTreeBinary(long long chave, Registro *registro){
     FILE *a = fopen("binarytree.bin", "rb");
     if(a == NULL){
         printf("Erro ao abrir o arquivo!\n");
-        return;
+        return 0;
     }
     Registro reg;
     while(fread(&reg, sizeof(Registro), 1, a) == 1){
         if(reg.chave == chave){
             *registro = reg;
+            fclose(a);
             return 1;
         }else if(reg.chave < chave){
             fseek(a, reg.dir * sizeof(Registro), 0);
@@ -87,5 +88,6 @@ int searchTreeBinary(long long chave, Registro *registro){
             fseek(a, reg.esq * sizeof(Registro), 0);
         }
     }
+    fclose(a);
     return 0;
 }

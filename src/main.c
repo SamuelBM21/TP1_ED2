@@ -121,7 +121,7 @@ void binaryTree(int qtd, int situ, long long chave) {
     if (registrosDuplicados > 0) {
         printf("Registros duplicados ignorados: %d\n", registrosDuplicados);
     }
-
+    
     printf("Procurando %lld na arvore binária\n", chave);
     if(searchTreeBinary(chave, &registro))
         printf("Registro encontrado: %lld\n", registro.chave);
@@ -198,7 +198,6 @@ void sequencialSearch(int qtd, int situ, long long chave) {
     int itens_pagina = define_page_size(qtd);
     int max_paginas = (qtd + itens_pagina - 1) / itens_pagina;
 
-    printf("%d IT %d MAX \n", itens_pagina, max_paginas);
     long long *tabela = (long long *) malloc(max_paginas* sizeof(long long));
 
     if (tabela == NULL) {
