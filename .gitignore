@@ -6,7 +6,6 @@
 *.log
 
 pesquisa
-s
 # Diretórios de build
 /build/
 /bin/
