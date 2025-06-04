@@ -3,26 +3,23 @@
 
 #define M 5
 #define MM 2*M
-typedef long TipoChave;
 
-typedef struct TipoRegistro{
-    TipoChave chave;
-} TipoRegistro;
+#include "register.h"
 
-typedef struct TipoPagina* TipoApontador;
+typedef struct Pagina* ApontaPagina;
 
-typedef struct TipoPagina{
+typedef struct Pagina{
     short n;
-    TipoRegistro r[MM];
-    TipoApontador p[MM+1];
-}TipoPagina;
+    Registro r[MM];
+    ApontaPagina p[MM+1];
+}Pagina;
 
-void Inicializa(TipoApontador *arvore);
-void Libera(TipoApontador *ap);
-int Pesquisa(TipoRegistro *x, TipoApontador ap);
-void Imprime(TipoApontador arvore);
-void InsereNaPagina(TipoApontador ap, TipoRegistro reg, TipoApontador apDir);
-void Ins(TipoRegistro reg, TipoApontador ap, short *cresceu, TipoRegistro *regRetorno, TipoApontador *apRetorno);
-void Insere(TipoRegistro reg, TipoApontador *ap);
+void Inicializa(ApontaPagina *arvore);
+void Libera(ApontaPagina *ap);
+int Pesquisa(Registro *x, ApontaPagina ap);
+void Imprime(ApontaPagina arvore);
+void InsereNaPagina(ApontaPagina ap, Registro reg, ApontaPagina apDir);
+void Ins(Registro reg, ApontaPagina ap, short *cresceu, Registro *regRetorno, ApontaPagina *apRetorno);
+void Insere(Registro reg, ApontaPagina *ap);
 
 #endif //B_TREE_H

@@ -1,14 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
-//#include <unistd.h>  // Para ftruncate e fileno
-//#include <sys/types.h>  // Para ftruncate
 #include "../include/b_tree.h"
 #include "../include/register.h"
 #include "../include/file_binary_tree.h"
 #include "../include/generator.h"
 #include "../include/sequential_search.h"
 
-// Prototypes das funções (você pode implementá-las depois)
 #define ASCENDINGFILE "dados1.bin"
 #define DESCENDINGFILE "dados2.bin"
 #define RANDOMFILE "dados3.bin"
@@ -142,7 +139,7 @@ Saída: --
 */
 
 void bTree(int qtd, int situ, long long chave) {
-    printf(">> Gerando arquivo de árvore B...\n\n");
+    printf(">> Gerando a árvore B...\n\n");
     FILE *arqComum;
 
     switch (situ) {         // Qual a situação do arquivo
@@ -175,18 +172,15 @@ void bTree(int qtd, int situ, long long chave) {
 
     int cont = 0;
     Registro registro;
-    TipoApontador arv;
+    ApontaPagina arv;
     Inicializa(&arv);
     
     while ((fread(&registro, sizeof(Registro), 1, arqComum) == 1) && cont < qtd) {        // Lê os registros do arquivo até a quantidade determinada
-        TipoRegistro x;
-        x.chave=registro.chave;
-
-        Insere(x, &arv);                            // Insere o registro na árvore
+        Insere(registro, &arv);                            // Insere o registro na árvore
         cont++;                                     // Incrementa o contador de registros
     }
 
-    TipoRegistro regPesquisa;
+    Registro regPesquisa;
     regPesquisa.chave = chave;                      // Inicializa um registro com a chave a ser procurada
 
     printf("Pesquisando chave %lld: ", chave);
