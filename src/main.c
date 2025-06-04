@@ -192,15 +192,22 @@ void bTree(int qtd, int situ, long long chave) {
     fclose(arqComum);
 }
 
+/*
+Nome: sequentialSearch
+Função: Criar a tabela com os valores iniciais das páginas do arquivo aberto, chamada da função de busca e impressão do resultado. 
+Entrada: Número de registros, tipo do arquivo aberto e a chave a ser procurada.
+Saída: --
+*/
+
 void sequentialSearch(int qtd, int situ, long long chave) {
     printf(">> Executando busca sequencial...\n");
 
-    int itens_pagina = define_page_size(qtd);
-    int max_paginas = (qtd + itens_pagina - 1) / itens_pagina;
+    int itens_pagina = define_page_size(qtd);                       // Define o número de itens por página
+    int max_paginas = (qtd + itens_pagina - 1) / itens_pagina;      // Define o número de páginas a partir do valor calculado anteriormente
 
-    long long *tabela = (long long *) malloc(max_paginas* sizeof(long long));
+    long long *tabela = (long long *) malloc(max_paginas* sizeof(long long));   // Aloca a memória para a tabela
 
-    if (tabela == NULL) {
+    if (tabela == NULL) {                                                       // Se ocorreu uma falha na alocação
         printf("Erro na alocação de memória para tabela\n");
         exit(1);
     }
@@ -210,44 +217,43 @@ void sequentialSearch(int qtd, int situ, long long chave) {
     Registro y;
     int cont = 0;
 
-    // abre o arquivo de dados
-    switch (situ) {
-        case 1:
-            arqComum = fopen(ASCENDINGFILE, "rb");
-            if (arqComum == NULL) {
+    switch (situ) {         // Qual a situação do arquivo
+        case 1:             // Caso o arquivo desejado seja ordenado ascendentemente
+            arqComum = fopen(ASCENDINGFILE, "rb");          // Abre o arquivo 
+            if (arqComum == NULL) {                         // Se ocorreu algum erro na abertura
                 printf("Erro ao abrir o arquivo para leitura\n");
                 return;
             }
             while ((fread(x, sizeof(Registro), itens_pagina, arqComum) > 0) && cont < max_paginas) {
-                tabela[cont] = x[0].chave;
-                cont++;
+                tabela[cont] = x[0].chave;                  // Preenche a tabela com os valores iniciais de cada página
+                cont++;                                     // Incrementa o contador de páginas
             }
         
             break;
-        case 2:
+        case 2:             // Caso o arquivo desejado seja ordenado descendentemente
             printf("Esse método só funciona para arquivos ordenados ascendentemente.\n");
-            free(tabela);
+            free(tabela);   // Libera a tabela
             return;
-        case 3:
+        case 3:             // Caso o arquivo desejado seja aleatório
             printf("Esse método só funciona para arquivos ordenados.\n");
-            free(tabela);
+            free(tabela);   // Libera a tabela
             return;
-        default:
+        default:            // Caso a opção escolhida não seja possível
             printf("Opção de situacao de arquivo inválida.\n");
-            free(tabela);
+            free(tabela);   // Libera a tabela
             return;
     }
 
-    fseek(arqComum, 0, SEEK_SET);
-    y.chave = chave;
+    fseek(arqComum, 0, SEEK_SET);       // Coloca o apontador do arquivo no início
+    y.chave = chave;                    // Inicializa um registro com a chave a ser procurada
     
-    if (search(tabela, cont, itens_pagina, &y, arqComum)) {
+    if (search(tabela, cont, itens_pagina, &y, arqComum)) {     // Se a busca for bem sucedida
         printf("Registro encontrado!\n");
         printf("Chave: %lld\n", y.chave);
-    } else {
+    } else {                                                    // Se não for bem sucedida
         printf("Registro nao encontrado.\n");
     }
 
-    free(tabela);
-    fclose(arqComum);
+    free(tabela);               // Libera a tabela
+    fclose(arqComum);           // Fecha o arquivo
 }
