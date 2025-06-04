@@ -6,7 +6,7 @@
 #include "../include/register.h"
 #include "../include/file_binary_tree.h"
 #include "../include/generator.h"
-#include "../include/sequencial_search.h"
+#include "../include/sequential_search.h"
 
 // Prototypes das funções (você pode implementá-las depois)
 #define ASCENDINGFILE "dados1.bin"
@@ -16,7 +16,7 @@
 
 void binaryTree(int, int, long long chave);
 void bTree(int, int, long long chave);
-void sequencialSearch(int, int , long long chave);
+void sequentialSearch(int, int , long long chave);
 
 int main (int argc, char* argv[]) {
     if (argc != 5 && argc != 6)
@@ -30,7 +30,7 @@ int main (int argc, char* argv[]) {
     //generateFile(1000000, RANDOMFILE,ORDER_DESCENDING) ? printf("Arquivo descendente gerado com sucesso\n") : printf("Falha ao gerar arquivo\n");
     switch (metodo) {
         case 1:
-            sequencialSearch(quantidade,situacao, chave);
+            sequentialSearch(quantidade,situacao, chave);
             break;
         case 2:
             binaryTree(quantidade,situacao, chave);
@@ -192,7 +192,7 @@ void bTree(int qtd, int situ, long long chave) {
     fclose(arqComum);
 }
 
-void sequencialSearch(int qtd, int situ, long long chave) {
+void sequentialSearch(int qtd, int situ, long long chave) {
     printf(">> Executando busca sequencial...\n");
 
     int itens_pagina = define_page_size(qtd);
@@ -226,19 +226,22 @@ void sequencialSearch(int qtd, int situ, long long chave) {
             break;
         case 2:
             printf("Esse método só funciona para arquivos ordenados ascendentemente.\n");
+            free(tabela);
             return;
         case 3:
             printf("Esse método só funciona para arquivos ordenados.\n");
+            free(tabela);
             return;
         default:
             printf("Opção de situacao de arquivo inválida.\n");
+            free(tabela);
             return;
     }
 
     fseek(arqComum, 0, SEEK_SET);
     y.chave = chave;
     
-    if (pesquisa(tabela, cont, itens_pagina, &y, arqComum)) {
+    if (search(tabela, cont, itens_pagina, &y, arqComum)) {
         printf("Registro encontrado!\n");
         printf("Chave: %lld\n", y.chave);
     } else {
