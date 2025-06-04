@@ -4,8 +4,8 @@
 *.exe
 *.out
 *.log
-
 pesquisa
+
 # Diretórios de build
 /build/
 /bin/
