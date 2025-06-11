@@ -5,6 +5,79 @@
 #include "generator.h"
 #include "register.h"
 
+void numeroPorExtenso(int numero, char *saida) {
+    const char *unidades[] = {"", "um", "dois", "três", "quatro", "cinco", "seis", "sete", "oito", "nove"};
+    const char *dezenas1[] = {"dez", "onze", "doze", "treze", "quatorze", "quinze", "dezesseis", "dezessete", "dezoito", "dezenove"};
+    const char *dezenas[] = {"", "", "vinte", "trinta", "quarenta", "cinquenta", "sessenta", "setenta", "oitenta", "noventa"};
+    const char *centenas[] = {"", "cento", "duzentos", "trezentos", "quatrocentos", "quinhentos",
+                              "seiscentos", "setecentos", "oitocentos", "novecentos"};
+
+    saida[0] = '\0';
+
+    if (numero < 0 || numero > 1000000) {
+        strcpy(saida, "fora do intervalo");
+        return;
+    }
+
+    if (numero == 0) {
+        strcpy(saida, "zero");
+        return;
+    }
+
+    if (numero == 1000000) {
+        strcpy(saida, "um milhão");
+        return;
+    }
+
+    int milhar = numero / 1000;
+    int resto = numero % 1000;
+
+    char temp[256] = "";
+
+    // Milhar
+    if (milhar > 0) {
+        if (milhar == 1) {
+            strcat(temp, "mil");
+        } else {
+            char parteMil[100];
+            numeroPorExtenso(milhar, parteMil);
+            strcat(temp, parteMil);
+            strcat(temp, " mil");
+        }
+        if (resto > 0) strcat(temp, " e ");
+    }
+
+    // Centenas, dezenas e unidades
+    if (resto > 0) {
+        if (resto == 100) {
+            strcat(temp, "cem");
+        } else {
+            int c = resto / 100;
+            int d = (resto % 100) / 10;
+            int u = resto % 10;
+
+            if (c > 0) {
+                strcat(temp, centenas[c]);
+                if (d > 0 || u > 0) strcat(temp, " e ");
+            }
+
+            if (d == 1) {
+                strcat(temp, dezenas1[u]);
+            } else {
+                if (d > 1) {
+                    strcat(temp, dezenas[d]);
+                    if (u > 0) strcat(temp, " e ");
+                }
+                if (d != 1 && u > 0) {
+                    strcat(temp, unidades[u]);
+                }
+            }
+        }
+    }
+
+    strcpy(saida, temp);
+}
+
 /*
 Nome: shuffle
 Função: Embaralhar vetor de chaves. 
@@ -60,8 +133,12 @@ int generateFile(long long numLines, const char *nameFile, int mode) {
     for (long long i = 0; i < numLines; i++) {                              // Preenche o restante dos dados de cada registro
         reg.chave = chaves[i];
         reg.dado1 = rand() * (long long)rand();
-        strcpy(reg.dado2, " ");
-        strcpy(reg.dado3, " ");
+        // Converte número para string (ex: "12345")
+        sprintf(reg.dado2, "%lld", reg.chave);
+
+        // Converte número para extenso (ex: "doze mil trezentos e quarenta e cinco")
+        numeroPorExtenso((int)reg.chave, reg.dado3);  
+
         fwrite(&reg, sizeof(Registro), 1, arq);
     }
 

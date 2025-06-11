@@ -7,7 +7,7 @@
 /*
 Nome: generateBinaryTreeFile
 Função: Gerar o arquivo de árvore binária
-Entrada: String com o nome do artigo
+Entrada: String com o nome do arquivo
 Saída: 1 para sucesso e 0 para erro
 */
 
