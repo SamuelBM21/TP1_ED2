@@ -6,6 +6,7 @@
 #include "../include/file_binary_tree.h"
 #include "../include/generator.h"
 #include "../include/sequential_search.h"
+#include "../include/b_star_tree.h"
 
 #define ASCENDINGFILE "dados1.bin"
 #define DESCENDINGFILE "dados2.bin"
@@ -15,12 +16,14 @@
 void binaryTree(int, int, long long chave, char flag[]);
 void bTree(int, int, long long chave, char flag[]);
 void sequentialSearch(int, int , long long chave, char flag[]);
+void bStarTree(int qtd, int situ, long long chave, char flag[]);
 
 int main (int argc, char* argv[]) {
 
-    if (argc != 5 && argc != 6)                    
+    if (argc != 5 && argc != 6){                    
         printf("Não foi passado o número mínimo de parâmetros. \n");
-
+        return 0;
+    }
     // Converte os argumentos para inteiros
     int metodo = atoi(argv[1]);                 
     int quantidade = atoi(argv[2]);
@@ -39,9 +42,9 @@ int main (int argc, char* argv[]) {
     }
 
 
-    //generateFile(1000000, DESCENDINGFILE,ORDER_RANDOM) ? printf("Arquivo aleatório gerado com sucesso\n") : printf("Falha ao gerar arquivo\n");
-    //generateFile(1000000, ASCENDINGFILE,ORDER_ASCENDING) ? printf("Arquivo ascendente gerado com sucesso\n") : printf("Falha ao gerar arquivo\n");
-    //generateFile(1000000, RANDOMFILE,ORDER_DESCENDING) ? printf("Arquivo descendente gerado com sucesso\n") : printf("Falha ao gerar arquivo\n");
+    // generateFile(1000000, DESCENDINGFILE,ORDER_RANDOM) ? printf("Arquivo aleatório gerado com sucesso\n") : printf("Falha ao gerar arquivo\n");
+    // generateFile(1000000, ASCENDINGFILE,ORDER_ASCENDING) ? printf("Arquivo ascendente gerado com sucesso\n") : printf("Falha ao gerar arquivo\n");
+    // generateFile(1000000, RANDOMFILE,ORDER_DESCENDING) ? printf("Arquivo descendente gerado com sucesso\n") : printf("Falha ao gerar arquivo\n");
     
     switch (metodo) {                                           // Qual o método de pesquisa escolhido 
         case 1:
@@ -54,12 +57,85 @@ int main (int argc, char* argv[]) {
             bTree(quantidade, situacao, chave, flag);                 // Árvore B
             break;
         case 4:
+            bStarTree(quantidade, situacao, chave, flag);
             break;
         default:
             printf("Opção inválida. Tente novamente.\n");
     }
     return 0;
 }
+
+
+/*
+Nome: bTree
+Função: Criar a árvore b com os valores do arquivo aberto, chamada da função de busca e impressão do resultado. 
+Entrada: Número de registros, tipo do arquivo aberto e a chave a ser procurada.
+Saída: --
+*/
+
+void bStarTree(int qtd, int situ, long long chave, char flag[]) {
+    printf(">> Gerando a árvore B*...\n\n");
+    FILE *arqComum;
+
+    switch (situ) {         // Qual a situação do arquivo
+        case 1:             // Caso o arquivo desejado seja ordenado ascendentemente
+            arqComum = fopen(ASCENDINGFILE, "rb");          // Abre o arquivo 
+            if (arqComum == NULL) {                         // Se ocorreu algum erro na abertura
+                printf("Erro ao abrir o arquivo para leitura\n");
+                return;
+            }
+            break;
+        case 2:             // Caso o arquivo desejado seja ordenado descendentemente
+            arqComum = fopen(DESCENDINGFILE, "rb");         // Abre o arquivo
+            if (arqComum == NULL) {                         // Se ocorreu algum erro na abertura
+                printf("Erro ao abrir o arquivo para leitura\n");
+                return;
+            }
+            break;
+
+        case 3:             // Caso o arquivo desejado seja aleatório
+            arqComum = fopen(RANDOMFILE, "rb");             // Abre o arquivo
+            if (arqComum == NULL) {                         // Se ocorreu algum erro na abertura
+                printf("Erro ao abrir o arquivo para leitura\n");
+                return;
+            }
+            break;
+        default:            // Caso a opção escolhida não seja possível
+            printf("Opção de situacao de arquivo inválida.\n");
+            return;
+    }
+
+    int cont = 0;
+    Registro registro;
+    ApontaPaginaStar arv;
+    InicializaStar(&arv);
+    
+    while ((fread(&registro, sizeof(Registro), 1, arqComum) == 1) && cont < qtd) {        // Lê os registros do arquivo até a quantidade determinada
+        InsereStar(registro, &arv);                            // Insere o registro na árvore
+        cont++;                                     // Incrementa o contador de registros
+    }
+
+    Registro regPesquisa;
+    regPesquisa.chave = chave;                      // Inicializa um registro com a chave a ser procurada
+
+    printf("Pesquisando chave %lld: ", chave);
+
+    if (PesquisaStar(&regPesquisa, arv)) {              // Se a busca foi bem sucedida
+        printf("Registro encontrado!\n");
+        if (strcmp(flag,"") != 0){
+            printf("Chave: %lld\n", regPesquisa.chave);
+            printf("Dado 1: %lld\n", regPesquisa.dado1);
+            printf("Dado 2: %s\n", regPesquisa.dado2);
+            printf("Dado 3: %s\n", regPesquisa.dado3);
+        }
+    } else {                                        // Se a busca não foi bem sucedida
+        printf("Registro não encontrado!\n");
+    }
+
+    LiberaStar(&arv);                                   // Libera a árvore
+    fclose(arqComum);                               // Fecha o arquivo
+}
+
 
 /*
 Nome: binaryTree
