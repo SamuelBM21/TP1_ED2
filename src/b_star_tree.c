@@ -29,23 +29,26 @@ int PesquisaStar(Registro *x, ApontaPaginaStar ap){
 
     if(ap->Pt == Interna){
         i = 1;
-        while(i < Pag->Union.Int.ni && x->chave > Pag->Union.Int.ri[i-1].chave) i++;
-        if(x->chave < Pag->Union.Int.ri[i-1].chave)
-            PesquisaStar(x, Pag->Union.Int.pi[i-1]);
-        else
-            PesquisaStar(x, Pag->Union.Int.pi[i]);
-        return 1;
-    }
-    i = 1;
-    while(i < Pag->Union.Ext.ne && x->chave > Pag->Union.Ext.re[i-1].chave) i++;
-    if(x->chave == Pag->Union.Ext.re[i-1].chave){
-        *x = Pag->Union.Ext.re[i-1];
-        return 1;
-    }
-    else
-        printf("O Registro não está presente na arvore\n");
-    return 0;
+        while(i < Pag->Union.Int.ni && x->chave > Pag->Union.Int.ri[i-1].chave) 
+            i++;
 
+        if(x->chave < Pag->Union.Int.ri[i-1].chave)
+            return PesquisaStar(x, Pag->Union.Int.pi[i-1]);
+        else
+            return PesquisaStar(x, Pag->Union.Int.pi[i]);
+    }
+
+    // Caso seja página externa
+    i = 1;
+    while(i < Pag->Union.Ext.ne && x->chave > Pag->Union.Ext.re[i-1].chave) 
+        i++;
+
+    if(x->chave == Pag->Union.Ext.re[i-1].chave){
+        *x = Pag->Union.Ext.re[i-1];  // Copia o registro encontrado
+        return 1;                     // Encontrou
+    } else {
+        return 0;                     // Não encontrou
+    }
 }
 
 
@@ -62,30 +65,16 @@ void insere_na_folha_especifica(ApontaPaginaStar folha, Registro reg) {
     folha->Union.Ext.ne++; // Incrementa o contador de registros da folha
 }
 
-void InsereStar(Registro reg, ApontaPaginaStar *ap) {
-    short cresceu;
-    Registro reg_retorno;
-    ApontaPaginaStar ap_retorno;
-
-    if (*ap == NULL) {
-        *ap = (ApontaPaginaStar)malloc(sizeof(PaginaStar));
-        (*ap)->Pt = Externa;
-        (*ap)->Union.Ext.ne = 1;
-        (*ap)->Union.Ext.re[0] = reg;
-        return;
+static void insere_no_no_interno(ApontaPaginaStar ap, Registro reg, ApontaPaginaStar filho_dir) {
+    int i = ap->Union.Int.ni;
+    while (i > 0 && reg.chave < ap->Union.Int.ri[i - 1].chave) {
+        ap->Union.Int.ri[i] = ap->Union.Int.ri[i - 1];
+        ap->Union.Int.pi[i + 1] = ap->Union.Int.pi[i];
+        i--;
     }
-
-    insere_recursivo(reg, *ap, &cresceu, &reg_retorno, &ap_retorno);
-
-    if (cresceu) {
-        ApontaPaginaStar nova_raiz = (ApontaPaginaStar)malloc(sizeof(PaginaStar));
-        nova_raiz->Pt = Interna;
-        nova_raiz->Union.Int.ni = 1;
-        nova_raiz->Union.Int.ri[0] = reg_retorno;
-        nova_raiz->Union.Int.pi[0] = *ap;
-        nova_raiz->Union.Int.pi[1] = ap_retorno;
-        *ap = nova_raiz;
-    }
+    ap->Union.Int.ri[i] = reg;
+    ap->Union.Int.pi[i + 1] = filho_dir;
+    ap->Union.Int.ni++;
 }
 
 
@@ -191,14 +180,31 @@ static void insere_recursivo(Registro reg, ApontaPaginaStar ap, short *cresceu, 
     *cresceu = 1;
 }
 
-static void insere_no_no_interno(ApontaPaginaStar ap, Registro reg, ApontaPaginaStar filho_dir) {
-    int i = ap->Union.Int.ni;
-    while (i > 0 && reg.chave < ap->Union.Int.ri[i - 1].chave) {
-        ap->Union.Int.ri[i] = ap->Union.Int.ri[i - 1];
-        ap->Union.Int.pi[i + 1] = ap->Union.Int.pi[i];
-        i--;
+
+
+
+void InsereStar(Registro reg, ApontaPaginaStar *ap) {
+    short cresceu;
+    Registro reg_retorno;
+    ApontaPaginaStar ap_retorno;
+
+    if (*ap == NULL) {
+        *ap = (ApontaPaginaStar)malloc(sizeof(PaginaStar));
+        (*ap)->Pt = Externa;
+        (*ap)->Union.Ext.ne = 1;
+        (*ap)->Union.Ext.re[0] = reg;
+        return;
     }
-    ap->Union.Int.ri[i] = reg;
-    ap->Union.Int.pi[i + 1] = filho_dir;
-    ap->Union.Int.ni++;
+
+    insere_recursivo(reg, *ap, &cresceu, &reg_retorno, &ap_retorno);
+
+    if (cresceu) {
+        ApontaPaginaStar nova_raiz = (ApontaPaginaStar)malloc(sizeof(PaginaStar));
+        nova_raiz->Pt = Interna;
+        nova_raiz->Union.Int.ni = 1;
+        nova_raiz->Union.Int.ri[0] = reg_retorno;
+        nova_raiz->Union.Int.pi[0] = *ap;
+        nova_raiz->Union.Int.pi[1] = ap_retorno;
+        *ap = nova_raiz;
+    }
 }

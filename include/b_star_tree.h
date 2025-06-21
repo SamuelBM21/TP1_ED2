@@ -29,14 +29,8 @@ typedef struct PaginaStar {
 void InicializaStar(ApontaPaginaStar *arvore);
 void LiberaStar(ApontaPaginaStar *ap);
 int PesquisaStar(Registro *x, ApontaPaginaStar ap);
-void ImprimeStar(ApontaPaginaStar arvore);
+//void ImprimeStar(ApontaPaginaStar arvore);
 void InsereStar(Registro reg, ApontaPaginaStar *ap);
-//static void insere_no_no_interno(ApontaPaginaStar ap, int chave, ApontaPaginaStar filho_dir);
-//static void insere_recursivo(Registro reg, ApontaPaginaStar ap, short *cresceu, Registro *reg_retorno, ApontaPaginaStar *ap_retorno);
-//static void insere_na_folha(ApontaPaginaStar ap, Registro reg);
-
-static void insere_recursivo(Registro reg, ApontaPaginaStar ap, short *cresceu, Registro *reg_retorno, ApontaPaginaStar *ap_retorno);
-static void insere_no_no_interno(ApontaPaginaStar ap, Registro reg, ApontaPaginaStar filho_dir);
 
 
 #endif //B_STAR_TREE_H
