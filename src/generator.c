@@ -101,48 +101,60 @@ Entrada: Número de linhas, nome do arquivo e tipo do arquivo.
 Saída: 1 caso foi gerado de forma correta e 0 caso não tenha sido possível gerar.
 */
 
+#define BUFFER_SIZE 1000   // Definindo um tamanho de buffer para que possa ser escrito no arquivo
+
 int generateFile(long long numLines, const char *nameFile, int mode) {
-    FILE *arq = fopen(nameFile, "wb");              // Abre o arquivo
-    if (!arq) {                                     // Se não for possível abrir
-        printf("Erro ao abrir arquivo");
+    FILE *arq = fopen(nameFile, "wb");
+    if (!arq) {
+        printf("Erro ao abrir arquivo\n");
         return 0;
     }
 
-    srand(time(NULL));                              // Define a semente para as funções da biblioteca rand
+    srand(time(NULL));
 
-    Registro reg;
-    long long *chaves = malloc(numLines * sizeof(long long));               // Aloca o vetor de chaves
-    if (!chaves) {                                                          // Se não foi possível alocar
-        printf("Erro ao alocar memória para chaves");
-        fclose(arq);                                                        // Fecha o arquivo
+    long long *chaves = malloc(numLines * sizeof(long long));
+    if (!chaves) {
+        printf("Erro ao alocar memória para chaves\n");
+        fclose(arq);
         return 0;
     }
 
-    for (long long i = 0; i < numLines; i++) {                              // Preenche o vetor de chaves
+    // Preenchendo as chaves
+    for (long long i = 0; i < numLines; i++) {
         chaves[i] = i;
     }
 
-    if (mode == ORDER_DESCENDING) {                                         // Modifica as chaves conforme o modo escolhido
-        for (long long i = 0; i < numLines; i++) {                          // Inverte o vetor de chaves
+    // Ordenação conforme o modo
+    if (mode == ORDER_DESCENDING) {
+        for (long long i = 0; i < numLines; i++) {
             chaves[i] = numLines - i - 1;
         }
     } else if (mode == ORDER_RANDOM) {
         shuffle(chaves, numLines);
     }
 
-    for (long long i = 0; i < numLines; i++) {                              // Preenche o restante dos dados de cada registro
-        reg.chave = chaves[i];
-        reg.dado1 = rand() * (long long)rand();
-        // Converte número para string (ex: "12345")
-        sprintf(reg.dado2, "%lld", reg.chave);
+    // Aloca buffer de registros
+    Registro buffer[BUFFER_SIZE];
 
-        // Converte número para extenso (ex: "doze mil trezentos e quarenta e cinco")
-        numeroPorExtenso((int)reg.chave, reg.dado3);  
+    long long total = 0;
+    while (total < numLines) {
+        int quantidade = (numLines - total >= BUFFER_SIZE) ? BUFFER_SIZE : (int)(numLines - total);
 
-        fwrite(&reg, sizeof(Registro), 1, arq);
+        memset(buffer, 0, sizeof(buffer));  // ZERA O BUFFER COMPLETO
+
+        for (int i = 0; i < quantidade; i++) {
+            buffer[i].chave = chaves[total + i];
+            buffer[i].dado1 = (long long)rand() * rand();
+            snprintf(buffer[i].dado2, sizeof(buffer[i].dado2), "%lld", buffer[i].chave);
+            numeroPorExtenso((int)buffer[i].chave, buffer[i].dado3);
+        }
+
+        fwrite(buffer, sizeof(Registro), quantidade, arq);
+        
+        total += quantidade;
     }
 
-    free(chaves);                                                           // Libera o vetor com as chaves
-    fclose(arq);                                                            // Fecha o arquivo
+    free(chaves);
+    fclose(arq);
     return 1;
 }
