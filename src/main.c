@@ -28,7 +28,7 @@ int main (int argc, char* argv[]) {
     int metodo = atoi(argv[1]);                 
     int quantidade = atoi(argv[2]);
     int situacao = atoi(argv[3]);
-    long long chave = atoi(argv[4]);
+    long long chave = atoll(argv[4]);
 
 
     char flag[10] = "";
@@ -42,9 +42,9 @@ int main (int argc, char* argv[]) {
     }
 
 
-    // generateFile(1000000, DESCENDINGFILE,ORDER_RANDOM) ? printf("Arquivo aleatório gerado com sucesso\n") : printf("Falha ao gerar arquivo\n");
-    // generateFile(1000000, ASCENDINGFILE,ORDER_ASCENDING) ? printf("Arquivo ascendente gerado com sucesso\n") : printf("Falha ao gerar arquivo\n");
-    // generateFile(1000000, RANDOMFILE,ORDER_DESCENDING) ? printf("Arquivo descendente gerado com sucesso\n") : printf("Falha ao gerar arquivo\n");
+    generateFile(1000000, RANDOMFILE,ORDER_RANDOM) ? printf("Arquivo aleatório gerado com sucesso\n") : printf("Falha ao gerar arquivo\n");
+    generateFile(1000000, ASCENDINGFILE,ORDER_ASCENDING) ? printf("Arquivo ascendente gerado com sucesso\n") : printf("Falha ao gerar arquivo\n");
+    generateFile(1000000, DESCENDINGFILE,ORDER_DESCENDING) ? printf("Arquivo descendente gerado com sucesso\n") : printf("Falha ao gerar arquivo\n");
     
     switch (metodo) {                                           // Qual o método de pesquisa escolhido 
         case 1:
@@ -67,73 +67,101 @@ int main (int argc, char* argv[]) {
 
 
 /*
-Nome: bTree
-Função: Criar a árvore b com os valores do arquivo aberto, chamada da função de busca e impressão do resultado. 
+Nome: bStarTree
+Função: Criar a árvore b* com os valores do arquivo aberto, chamada da função de busca e impressão do resultado. 
 Entrada: Número de registros, tipo do arquivo aberto e a chave a ser procurada.
 Saída: --
 */
 
 void bStarTree(int qtd, int situ, long long chave, char flag[]) {
-    printf(">> Gerando a árvore B*...\n\n");
+    printf(">> Buscando na árvore B* por blocos...\n\n");
     FILE *arqComum;
 
-    switch (situ) {         // Qual a situação do arquivo
-        case 1:             // Caso o arquivo desejado seja ordenado ascendentemente
-            arqComum = fopen(ASCENDINGFILE, "rb");          // Abre o arquivo 
-            if (arqComum == NULL) {                         // Se ocorreu algum erro na abertura
-                printf("Erro ao abrir o arquivo para leitura\n");
-                return;
-            }
-            break;
-        case 2:             // Caso o arquivo desejado seja ordenado descendentemente
-            arqComum = fopen(DESCENDINGFILE, "rb");         // Abre o arquivo
-            if (arqComum == NULL) {                         // Se ocorreu algum erro na abertura
-                printf("Erro ao abrir o arquivo para leitura\n");
-                return;
-            }
-            break;
-
-        case 3:             // Caso o arquivo desejado seja aleatório
-            arqComum = fopen(RANDOMFILE, "rb");             // Abre o arquivo
-            if (arqComum == NULL) {                         // Se ocorreu algum erro na abertura
-                printf("Erro ao abrir o arquivo para leitura\n");
-                return;
-            }
-            break;
-        default:            // Caso a opção escolhida não seja possível
-            printf("Opção de situacao de arquivo inválida.\n");
+    // Seleciona o arquivo
+    const char *nomeArquivo;
+    switch (situ) {
+        case 1: nomeArquivo = ASCENDINGFILE; break;
+        case 2: nomeArquivo = DESCENDINGFILE; break;
+        case 3: nomeArquivo = RANDOMFILE; break;
+        default:
+            printf("Opção de situação de arquivo inválida.\n");
             return;
     }
 
-    int cont = 0;
-    Registro registro;
-    ApontaPaginaStar arv;
-    InicializaStar(&arv);
-    
-    while ((fread(&registro, sizeof(Registro), 1, arqComum) == 1) && cont < qtd) {        // Lê os registros do arquivo até a quantidade determinada
-        InsereStar(registro, &arv);                            // Insere o registro na árvore
-        cont++;                                     // Incrementa o contador de registros
+    arqComum = fopen(nomeArquivo, "rb");
+    if (arqComum == NULL) {
+        printf("Erro ao abrir o arquivo para leitura\n");
+        return;
     }
 
+    int encontrou = 0;
+    long totalLidos = 0;
+    const int BLOCO = 10000;  // Tamanho da árvore temporária
+    const int LEITURA_BLOCO = 1000;  // Leitura do arquivo em blocos de 1000 registros
+
+    Registro buffer[LEITURA_BLOCO];  // Buffer para ler registros do arquivo
     Registro regPesquisa;
-    regPesquisa.chave = chave;                      // Inicializa um registro com a chave a ser procurada
+    memset(&regPesquisa, 0, sizeof(regPesquisa));
+    regPesquisa.chave = chave;
 
-    printf("Pesquisando chave %lld: ", chave);
+    int registrosRestantes = qtd;
 
-    if (PesquisaStar(&regPesquisa, arv)) {              // Se a busca foi bem sucedida
-        printf("Registro encontrado!\n");
-        if (strcmp(flag,"") != 0){
-            printf("Chave: %lld\n", regPesquisa.chave);
-            printf("Dado 1: %lld\n", regPesquisa.dado1);
-            printf("Dado 2: %s\n", regPesquisa.dado2);
-            printf("Dado 3: %s\n", regPesquisa.dado3);
+    while (!encontrou && registrosRestantes > 0) {
+        // 🌳 Cria uma nova árvore para este bloco
+        ApontaPaginaStar arv;
+        InicializaStar(&arv);
+
+        int cont = 0;
+
+        while (cont < BLOCO && registrosRestantes > 0) {
+            long quantidadeParaLer = (BLOCO - cont < LEITURA_BLOCO) ? (BLOCO - cont) : LEITURA_BLOCO;
+            if (quantidadeParaLer > registrosRestantes) {
+                quantidadeParaLer = registrosRestantes;
+            }
+
+            long lidos = fread(buffer, sizeof(Registro), quantidadeParaLer, arqComum);
+            if (lidos == 0) {
+                break;  // Fim do arquivo
+            }
+
+            for (long i = 0; i < lidos; i++) {
+                InsereStar(buffer[i], &arv);
+                cont++;
+                totalLidos++;
+                registrosRestantes--;
+            }
+
+            if (lidos < quantidadeParaLer) {
+                break; // Chegou no fim do arquivo
+            }
         }
-    } else {                                        // Se a busca não foi bem sucedida
-        printf("Registro não encontrado!\n");
+
+        if (cont == 0) {
+            //  Não tem mais dados para ler
+            break;
+        }
+
+        printf("Buscando na árvore com registros %ld até %ld...\n", totalLidos - cont, totalLidos - 1);
+
+        if (PesquisaStar(&regPesquisa, arv)) {
+            printf("✅ Registro encontrado!\n");
+            if (strcmp(flag, "-p") == 0) {
+                printf("Chave: %lld\n", regPesquisa.chave);
+                printf("Dado 1: %lld\n", regPesquisa.dado1);
+                printf("Dado 2: %s\n", regPesquisa.dado2);
+                printf("Dado 3: %s\n", regPesquisa.dado3);
+            }
+            encontrou = 1;
+        }
+
+        LiberaStar(&arv); // Libera a árvore deste bloco
     }
 
-    LiberaStar(&arv);                                   // Libera a árvore
-    fclose(arqComum);                               // Fecha o arquivo
+    if (!encontrou) {
+        printf("Registro não encontrado após percorrer %ld registros.\n", totalLidos);
+    }
+
+    fclose(arqComum);
 }
 
 
