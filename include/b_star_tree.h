@@ -1,12 +1,11 @@
 #ifndef B_STAR_TREE_H
 #define B_STAR_TREE_H
 
-#define M 5
-#define MM 2*M
+
 
 #include "register.h"
 
-typedef enum {Interna, Externa} TipoIntExt;
+typedef enum { Interna, Externa } TipoIntExt;
 typedef struct PaginaStar* ApontaPaginaStar;
 
 typedef struct PaginaStar {
@@ -14,23 +13,20 @@ typedef struct PaginaStar {
     union {
         struct {
             int ni;
-            Registro ri[MM];
-            ApontaPaginaStar pi[MM + 1];
+            long long ri[MM];           // Vetor de chaves (mantendo o nome ri)
+            ApontaPaginaStar pi[MM + 1]; // Ponteiros para filhos
         } Int;
         struct {
             int ne;
-            Registro re[MM];
+            Registro re[MM];            // Registros nas folhas
         } Ext;
     } Union;
 } PaginaStar;
 
-
-
+// Funções principais
 void InicializaStar(ApontaPaginaStar *arvore);
 void LiberaStar(ApontaPaginaStar *ap);
 int PesquisaStar(Registro *x, ApontaPaginaStar ap);
-//void ImprimeStar(ApontaPaginaStar arvore);
 void InsereStar(Registro reg, ApontaPaginaStar *ap);
 
-
-#endif //B_STAR_TREE_H
+#endif

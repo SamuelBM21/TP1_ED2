@@ -46,7 +46,7 @@ int main (int argc, char* argv[]) {
         }
 
     }
-
+    
 
     // generateFile(1000000, RANDOMFILE,ORDER_RANDOM) ? printf("Arquivo aleatório gerado com sucesso\n") : printf("Falha ao gerar arquivo\n");
     // generateFile(1000000, ASCENDINGFILE,ORDER_ASCENDING) ? printf("Arquivo ascendente gerado com sucesso\n") : printf("Falha ao gerar arquivo\n");
@@ -63,7 +63,8 @@ int main (int argc, char* argv[]) {
             bTree(quantidade, situacao, chave, flag);                 // Árvore B
             break;
         case 4:
-            bStarTree(quantidade, situacao, chave, flag);
+
+        bStarTree(quantidade, situacao, chave, flag);             // Árvore B*
             break;
         default:
             printf("Opção inválida. Tente novamente.\n");
@@ -106,7 +107,7 @@ void bStarTree(int qtd, int situ, long long chave, char flag[]) {
     const int BLOCO = 10000;  // Tamanho da árvore temporária
     const int LEITURA_BLOCO = 1000;  // Leitura do arquivo em blocos de 1000 registros
 
-    Registro buffer[LEITURA_BLOCO];  // Buffer para ler registros do arquivo
+    Registro *buffer = malloc(LEITURA_BLOCO * sizeof(Registro));  // Buffer para ler registros do arquivo
 
     Registro regPesquisa;
     memset(&regPesquisa, 0, sizeof(regPesquisa)); // Zerando o Registro
@@ -168,7 +169,7 @@ void bStarTree(int qtd, int situ, long long chave, char flag[]) {
     if (!encontrou) {
         printf("Registro não encontrado após percorrer %ld registros.\n", totalLidos);
     }
-
+    free(buffer);
     fclose(arqComum);
 }
 
@@ -262,7 +263,7 @@ void binaryTree(int qtd, int situ, long long chave, char flag[]) {
     fclose(arqComum);                       // Fecha o arquivo de registros
     fclose(arqArvore);                      // Fecha o arquivo com a árvore binária
 }
-#undef COM_APONTADOR
+
 /*
 Nome: bTree
 Função: Criar a árvore b com os valores do arquivo aberto, chamada da função de busca e impressão do resultado. 

@@ -1,9 +1,6 @@
 #ifndef B_TREE_H
 #define B_TREE_H
 
-#define M 5
-#define MM 2*M
-
 #include "register.h"
 
 typedef struct Pagina* ApontaPagina;

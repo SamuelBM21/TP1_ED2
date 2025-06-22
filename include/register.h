@@ -1,6 +1,8 @@
 #ifndef REGISTER_H
 #define REGISTER_H
 
+#define M 5
+#define MM (2 * M)
 
 typedef struct{
     long long chave;

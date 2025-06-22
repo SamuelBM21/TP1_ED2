@@ -2,104 +2,98 @@
 #include <stdlib.h>
 #include "../include/b_star_tree.h"
 
-void InicializaStar(ApontaPaginaStar *arvore){
+// Inicializa a árvore B* como vazia (ponteiro NULL)
+void InicializaStar(ApontaPaginaStar *arvore) {
     *arvore = NULL;
 }
 
-void LiberaStar(ApontaPaginaStar *ap){
-    if ((*ap) == NULL) return;
+// Libera recursivamente toda a memória ocupada pela árvore
+void LiberaStar(ApontaPaginaStar *ap) {
+    if ((*ap) == NULL) return; // Caso base: árvore vazia
 
-    // Se for um nó interno, precisa liberar os filhos primeiro
-    if ((*ap)->Pt == Interna) {
-        // Percorre todos os ponteiros dos filhos
+    if ((*ap)->Pt == Interna) { // Se for nó interno, libera recursivamente os filhos
         for (int i = 0; i <= (*ap)->Union.Int.ni; i++) {
             LiberaStar(&((*ap)->Union.Int.pi[i]));
         }
     }
-    
-    // Libera a memória do nó atual, seja ele interno ou folha
-    free(*ap);
-    *ap = NULL;
+
+    free(*ap); // Libera o próprio nó
+    *ap = NULL; // Evita ponteiro pendente
 }
 
-int PesquisaStar(Registro *x, ApontaPaginaStar ap){
+// Função de pesquisa na árvore B*
+int PesquisaStar(Registro *x, ApontaPaginaStar ap) {
     int i;
-    ApontaPaginaStar Pag;
-    Pag = ap;
+    if (ap == NULL) return 0; // Árvore vazia, chave não encontrada
 
-    if(ap->Pt == Interna){
+    if (ap->Pt == Interna) { // Se nó interno, desce na árvore
         i = 1;
-        while(i < Pag->Union.Int.ni && x->chave > Pag->Union.Int.ri[i-1].chave) 
-            i++;
+        // Encontra o índice do ponteiro filho apropriado
+        while (i < ap->Union.Int.ni && x->chave > ap->Union.Int.ri[i - 1]) i++;
 
-        if(x->chave < Pag->Union.Int.ri[i-1].chave)
-            return PesquisaStar(x, Pag->Union.Int.pi[i-1]);
+        if (x->chave < ap->Union.Int.ri[i - 1])
+            return PesquisaStar(x, ap->Union.Int.pi[i - 1]); // Vai para a esquerda
         else
-            return PesquisaStar(x, Pag->Union.Int.pi[i]);
+            return PesquisaStar(x, ap->Union.Int.pi[i]);     // Vai para a direita
     }
 
-    // Caso seja página externa
+    // Nó folha: busca sequencial ordenada
     i = 1;
-    while(i < Pag->Union.Ext.ne && x->chave > Pag->Union.Ext.re[i-1].chave) 
-        i++;
+    while (i < ap->Union.Ext.ne && x->chave > ap->Union.Ext.re[i - 1].chave) i++;
 
-    if(x->chave == Pag->Union.Ext.re[i-1].chave){
-        *x = Pag->Union.Ext.re[i-1];  // Copia o registro encontrado
-        return 1;                     // Encontrou
+    if (x->chave == ap->Union.Ext.re[i - 1].chave) { // Encontrou
+        *x = ap->Union.Ext.re[i - 1]; // Copia os dados encontrados
+        return 1;
     } else {
-        return 0;                     // Não encontrou
+        return 0; // Não encontrado
     }
 }
 
-
-
+// Insere um registro diretamente em uma folha específica (sem tratar splits)
 void insere_na_folha_especifica(ApontaPaginaStar folha, Registro reg) {
     int i = folha->Union.Ext.ne;
-    // Desloca registros para a direita para abrir espaço
-    while(i > 0 && reg.chave < folha->Union.Ext.re[i-1].chave) {
-        folha->Union.Ext.re[i] = folha->Union.Ext.re[i-1];
+    // Desloca registros maiores para frente
+    while (i > 0 && reg.chave < folha->Union.Ext.re[i - 1].chave) {
+        folha->Union.Ext.re[i] = folha->Union.Ext.re[i - 1];
         i--;
     }
-    // Insere o novo registro na posição correta
-    folha->Union.Ext.re[i] = reg;
-    folha->Union.Ext.ne++; // Incrementa o contador de registros da folha
+    folha->Union.Ext.re[i] = reg; // Insere na posição correta
+    folha->Union.Ext.ne++;        // Incrementa o número de registros na folha
 }
 
-static void insere_no_no_interno(ApontaPaginaStar ap, Registro reg, ApontaPaginaStar filho_dir) {
+// Insere uma chave e um ponteiro no nó interno (sem tratar splits)
+static void insere_no_no_interno(ApontaPaginaStar ap, long long chave, ApontaPaginaStar filho_dir) {
     int i = ap->Union.Int.ni;
-    while (i > 0 && reg.chave < ap->Union.Int.ri[i - 1].chave) {
+    // Desloca chaves maiores para frente
+    while (i > 0 && chave < ap->Union.Int.ri[i - 1]) {
         ap->Union.Int.ri[i] = ap->Union.Int.ri[i - 1];
         ap->Union.Int.pi[i + 1] = ap->Union.Int.pi[i];
         i--;
     }
-    ap->Union.Int.ri[i] = reg;
+    // Insere chave e ponteiro na posição correta
+    ap->Union.Int.ri[i] = chave;
     ap->Union.Int.pi[i + 1] = filho_dir;
-    ap->Union.Int.ni++;
+    ap->Union.Int.ni++; // Incrementa o número de chaves no nó interno
 }
 
-
-
-static void insere_recursivo(Registro reg, ApontaPaginaStar ap, short *cresceu, Registro *reg_retorno, ApontaPaginaStar *ap_retorno) {
-    if (ap->Pt == Externa) {
-        // Caso base: folha
+// Função recursiva que gerencia a inserção na árvore
+static void insere_recursivo(Registro reg, ApontaPaginaStar ap, short *cresceu, long long *chave_retorno, ApontaPaginaStar *ap_retorno) {
+    if (ap->Pt == Externa) { // Caso base: nó folha
         if (ap->Union.Ext.ne < MM) {
+            // Caso haja espaço na folha, insere diretamente
             insere_na_folha_especifica(ap, reg);
             *cresceu = 0;
             return;
         }
 
-        // SPLIT da folha
+        // Split da folha (folha cheia)
         ApontaPaginaStar nova_folha = (ApontaPaginaStar)malloc(sizeof(PaginaStar));
         nova_folha->Pt = Externa;
 
-        Registro temp[MM + 1];
-        int i = 0;
-        while (i < MM) {
-            temp[i] = ap->Union.Ext.re[i];
-            i++;
-        }
+        Registro temp[MM + 1]; // Vetor temporário para acomodar os registros existentes + novo
+        for (int i = 0; i < MM; i++) temp[i] = ap->Union.Ext.re[i];
 
-        // Inserção ordenada com novo registro
+        // Insere o novo registro na posição correta no vetor temporário
         int j = MM;
         while (j > 0 && reg.chave < temp[j - 1].chave) {
             temp[j] = temp[j - 1];
@@ -107,87 +101,93 @@ static void insere_recursivo(Registro reg, ApontaPaginaStar ap, short *cresceu, 
         }
         temp[j] = reg;
 
-        // Divide os registros
+        // Divide os registros entre a folha atual e a nova folha
         ap->Union.Ext.ne = (MM + 1) / 2;
         nova_folha->Union.Ext.ne = (MM + 1) - ap->Union.Ext.ne;
 
-        for (i = 0; i < ap->Union.Ext.ne; i++)
+        for (int i = 0; i < ap->Union.Ext.ne; i++) 
             ap->Union.Ext.re[i] = temp[i];
 
-        for (i = 0; i < nova_folha->Union.Ext.ne; i++)
+        for (int i = 0; i < nova_folha->Union.Ext.ne; i++) 
             nova_folha->Union.Ext.re[i] = temp[i + ap->Union.Ext.ne];
 
-        *reg_retorno = nova_folha->Union.Ext.re[0]; // Primeira chave da nova folha
+        // Retorna a menor chave da nova folha (para promover no nó pai)
+        *chave_retorno = nova_folha->Union.Ext.re[0].chave;
         *ap_retorno = nova_folha;
         *cresceu = 1;
         return;
     }
 
-    // Nó interno: desce recursivamente
+    // Caso seja nó interno
     int i = ap->Union.Int.ni - 1;
-    while (i >= 0 && reg.chave < ap->Union.Int.ri[i].chave) i--;
+    // Encontra o filho apropriado para descer
+    while (i >= 0 && reg.chave < ap->Union.Int.ri[i]) i--;
     i++;
 
-    insere_recursivo(reg, ap->Union.Int.pi[i], cresceu, reg_retorno, ap_retorno);
+    // Chamada recursiva no filho
+    insere_recursivo(reg, ap->Union.Int.pi[i], cresceu, chave_retorno, ap_retorno);
 
-    if (!(*cresceu)) return;
+    if (!(*cresceu)) return; // Se o filho não cresceu, encerra
 
-    // Tem espaço no nó interno
     if (ap->Union.Int.ni < MM) {
-        insere_no_no_interno(ap, *reg_retorno, *ap_retorno);
+        // Se há espaço no nó interno, insere chave e ponteiro do filho
+        insere_no_no_interno(ap, *chave_retorno, *ap_retorno);
         *cresceu = 0;
         return;
     }
 
-    // SPLIT do nó interno
+    // Split do nó interno
     ApontaPaginaStar novo_no = (ApontaPaginaStar)malloc(sizeof(PaginaStar));
     novo_no->Pt = Interna;
 
-    Registro temp_reg[MM + 1];
-    ApontaPaginaStar temp_ptr[MM + 2];
+    long long temp_ri[MM + 1];            // Vetor temporário para chaves
+    ApontaPaginaStar temp_pi[MM + 2];     // Vetor temporário para ponteiros
 
-    for (int j = 0; j < MM; j++) temp_reg[j] = ap->Union.Int.ri[j];
-    for (int j = 0; j <= MM; j++) temp_ptr[j] = ap->Union.Int.pi[j];
+    // Copia os dados atuais para os vetores temporários
+    for (int j = 0; j < MM; j++) temp_ri[j] = ap->Union.Int.ri[j];
+    for (int j = 0; j <= MM; j++) temp_pi[j] = ap->Union.Int.pi[j];
 
-    // Inserção ordenada
+    // Insere a nova chave e ponteiro na posição correta
     int j = MM;
-    while (j > 0 && reg_retorno->chave < temp_reg[j - 1].chave) {
-        temp_reg[j] = temp_reg[j - 1];
-        temp_ptr[j + 1] = temp_ptr[j];
+    while (j > 0 && *chave_retorno < temp_ri[j - 1]) {
+        temp_ri[j] = temp_ri[j - 1];
+        temp_pi[j + 1] = temp_pi[j];
         j--;
     }
-    temp_reg[j] = *reg_retorno;
-    temp_ptr[j + 1] = *ap_retorno;
+    temp_ri[j] = *chave_retorno;
+    temp_pi[j + 1] = *ap_retorno;
 
+    // Calcula ponto de divisão (meio)
     int meio = (MM + 1) / 2;
     ap->Union.Int.ni = meio;
     novo_no->Union.Int.ni = MM - meio;
 
+    // Distribui chaves e ponteiros entre nó atual e novo nó
     for (int k = 0; k < meio; k++) {
-        ap->Union.Int.ri[k] = temp_reg[k];
-        ap->Union.Int.pi[k] = temp_ptr[k];
+        ap->Union.Int.ri[k] = temp_ri[k];
+        ap->Union.Int.pi[k] = temp_pi[k];
     }
-    ap->Union.Int.pi[meio] = temp_ptr[meio];
+    ap->Union.Int.pi[meio] = temp_pi[meio];
 
     for (int k = 0; k < novo_no->Union.Int.ni; k++) {
-        novo_no->Union.Int.ri[k] = temp_reg[k + meio + 1];
-        novo_no->Union.Int.pi[k] = temp_ptr[k + meio + 1];
+        novo_no->Union.Int.ri[k] = temp_ri[k + meio + 1];
+        novo_no->Union.Int.pi[k] = temp_pi[k + meio + 1];
     }
-    novo_no->Union.Int.pi[novo_no->Union.Int.ni] = temp_ptr[MM + 1];
+    novo_no->Union.Int.pi[novo_no->Union.Int.ni] = temp_pi[MM + 1];
 
-    *reg_retorno = temp_reg[meio];
+    // Promove a chave do meio para o nível acima
+    *chave_retorno = temp_ri[meio];
     *ap_retorno = novo_no;
     *cresceu = 1;
 }
 
-
-
-
+// Função principal de inserção pública na árvore
 void InsereStar(Registro reg, ApontaPaginaStar *ap) {
     short cresceu;
-    Registro reg_retorno;
+    long long chave_retorno;
     ApontaPaginaStar ap_retorno;
 
+    // Se a árvore está vazia, cria uma nova folha e insere o registro
     if (*ap == NULL) {
         *ap = (ApontaPaginaStar)malloc(sizeof(PaginaStar));
         (*ap)->Pt = Externa;
@@ -196,15 +196,17 @@ void InsereStar(Registro reg, ApontaPaginaStar *ap) {
         return;
     }
 
-    insere_recursivo(reg, *ap, &cresceu, &reg_retorno, &ap_retorno);
+    // Chamada recursiva para inserir
+    insere_recursivo(reg, *ap, &cresceu, &chave_retorno, &ap_retorno);
 
     if (cresceu) {
+        // Se a raiz cresceu, cria uma nova raiz
         ApontaPaginaStar nova_raiz = (ApontaPaginaStar)malloc(sizeof(PaginaStar));
         nova_raiz->Pt = Interna;
         nova_raiz->Union.Int.ni = 1;
-        nova_raiz->Union.Int.ri[0] = reg_retorno;
+        nova_raiz->Union.Int.ri[0] = chave_retorno;
         nova_raiz->Union.Int.pi[0] = *ap;
         nova_raiz->Union.Int.pi[1] = ap_retorno;
-        *ap = nova_raiz;
+        *ap = nova_raiz; // Atualiza ponteiro da árvore para nova raiz
     }
 }
