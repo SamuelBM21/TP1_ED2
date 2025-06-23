@@ -21,7 +21,7 @@ all: $(TARGET)
 # Linking the final executable
 $(TARGET): $(OBJS)
 	@mkdir -p $(BIN_DIR)
-	$(CC) $(OBJS) -o $@
+	$(CC) $(OBJS) -o $@ -lm
 
 # Compiling source files to object files
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
