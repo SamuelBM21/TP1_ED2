@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
+#include <time.h>
 #include "../include/b_tree.h"
 #include "../include/register.h"
 #include "../include/file_binary_tree.h"
@@ -47,7 +49,6 @@ int main (int argc, char* argv[]) {
 
     }
     
-
     // generateFile(1000000, RANDOMFILE,ORDER_RANDOM) ? printf("Arquivo aleatório gerado com sucesso\n") : printf("Falha ao gerar arquivo\n");
     // generateFile(1000000, ASCENDINGFILE,ORDER_ASCENDING) ? printf("Arquivo ascendente gerado com sucesso\n") : printf("Falha ao gerar arquivo\n");
     // generateFile(1000000, DESCENDINGFILE,ORDER_DESCENDING) ? printf("Arquivo descendente gerado com sucesso\n") : printf("Falha ao gerar arquivo\n");
@@ -105,12 +106,7 @@ void bStarTree(int qtd, int situ, long long chave, char flag[]) {
         return;
     }
 
-    int encontrou = 0;      // Flag que indica se a chave foi encontrada
-    long totalLidos = 0;    // Contador total de registros lidos até o momento
-
-    
-    const int BLOCO = 10000;       // Máximo de registros inseridos numa única árvore temporária
-    const int LEITURA_BLOCO = 1000; // Quantidade de registros lida por vez do disco
+    const int LEITURA_BLOCO = 50; // Quantidade de registros lida por vez do disco
 
     // Buffer dinâmico para armazenar temporariamente os registros lidos
     Registro *buffer = malloc(LEITURA_BLOCO * sizeof(Registro));
@@ -120,83 +116,76 @@ void bStarTree(int qtd, int situ, long long chave, char flag[]) {
         return;
     }
 
+    int registrosRestantes = qtd;  // Quantos registros ainda precisamos processar
+    long totalLidos = 0;    // Contador total de registros lidos até o momento
+
+
+    // 1) Inicializa uma nova árvore B* vazia
+    ApontaPaginaStar arv;
+    InicializaStar(&arv);
+
+    // 2) Lê do arquivo até preencher o bloco ou esgotar os registros restantes
+    while (registrosRestantes > 0) {
+        // Calcula quantos registros ler neste ciclo
+        long quantidadeParaLer = (registrosRestantes < LEITURA_BLOCO) ? registrosRestantes : LEITURA_BLOCO;
+            
+        // Lê do disco para o buffer
+        long lidos = fread(buffer, sizeof(Registro), quantidadeParaLer, arqComum);
+        if (lidos == 0) {
+            // Fim de arquivo ou erro de leitura
+            break;
+        }
+
+        // Insere cada registro lido na árvore temporária
+        for (long i = 0; i < lidos; i++) {
+            InsereStar(buffer[i], &arv);
+            totalLidos++;
+            registrosRestantes--;
+        }
+
+        // Se leu menos que o solicitado, chegou ao final do arquivo
+        if (lidos < quantidadeParaLer) {
+            break;
+        }
+    }
+
+
+    // Informando ao Usuario
+    printf("Buscando na árvore B*\n");
+
+    int comp = 0; // Usado para guardar o numero de comparações
+
     // Estrutura usada para pesquisa, inicializada apenas com a chave desejada
     Registro regPesquisa;
     memset(&regPesquisa, 0, sizeof(regPesquisa));
     regPesquisa.chave = chave;
 
-    int registrosRestantes = qtd;  // Quantos registros ainda precisamos processar
+    clock_t inicio, fim;
+    inicio = clock();
 
-    // Loop principal: constrói e testa uma árvore B* para cada bloco de até BLOCO registros
-    while (!encontrou && registrosRestantes > 0) {
-        // 1) Inicializa uma nova árvore B* vazia para este bloco
-        ApontaPaginaStar arv;
-        InicializaStar(&arv);
-
-        int cont = 0;  // Quantos registros foram inseridos nesta árvore temporária
-
-        // 2) Lê do arquivo até preencher o bloco ou esgotar os registros restantes
-        while (cont < BLOCO && registrosRestantes > 0) {
-            // Calcula quantos registros ler neste ciclo
-            long quantidadeParaLer = (BLOCO - cont < LEITURA_BLOCO) ? (BLOCO - cont) : LEITURA_BLOCO;
-            
-            if (quantidadeParaLer > registrosRestantes) {
-                quantidadeParaLer = registrosRestantes;
-            }
-
-            // Lê do disco para o buffer
-            long lidos = fread(buffer, sizeof(Registro), quantidadeParaLer, arqComum);
-            if (lidos == 0) {
-                // Fim de arquivo ou erro de leitura
-                break;
-            }
-
-            // Insere cada registro lido na árvore temporária
-            for (long i = 0; i < lidos; i++) {
-                InsereStar(buffer[i], &arv);
-                cont++;
-                totalLidos++;
-                registrosRestantes--;
-            }
-
-            // Se leu menos que o solicitado, chegou ao final do arquivo
-            if (lidos < quantidadeParaLer) {
-                break;
-            }
+    // 3) Executa a pesquisa na árvore do bloco
+    if (PesquisaStar(&regPesquisa, arv, &comp)) {
+        printf("Registro encontrado!\n");
+        // Se a flag "-p" estiver ativa, exibe o conteúdo completo
+        if (strcmp(flag, "-p") == 0) {
+            printf("Chave: %lld\n", regPesquisa.chave);
+            printf("Dado 1: %lld\n", regPesquisa.dado1);
+            printf("Dado 2: %s\n", regPesquisa.dado2);
+            printf("Dado 3: %s\n", regPesquisa.dado3);
         }
-
-        // Se não inseriu nenhum registro, acabou o arquivo ou não há mais dados
-        if (cont == 0) {
-            break;
-        }
-
-        // Informe a faixa de registros analisada no bloco atual
-        printf("Buscando na árvore com registros %ld até %ld...\n",
-               totalLidos - cont, totalLidos - 1);
-
-        // 3) Executa a pesquisa na árvore do bloco
-        if (PesquisaStar(&regPesquisa, arv)) {
-            printf("Registro encontrado!\n");
-            // Se a flag "-p" estiver ativa, exibe o conteúdo completo
-            if (strcmp(flag, "-p") == 0) {
-                printf("Chave: %lld\n", regPesquisa.chave);
-                printf("Dado 1: %lld\n", regPesquisa.dado1);
-                printf("Dado 2: %s\n", regPesquisa.dado2);
-                printf("Dado 3: %s\n", regPesquisa.dado3);
-            }
-            encontrou = 1;
-        }
-
-        // 4) Libera os recursos da árvore antes de avançar para o próximo bloco
-        LiberaStar(&arv);
-    }
-
-    // Se percorreu tudo sem encontrar, avisa o usuário
-    if (!encontrou) {
+    } else {
+        // Se percorreu tudo sem encontrar, avisa o usuário
         printf("Registro não encontrado após percorrer %ld registros.\n", totalLidos);
     }
 
-    // Limpeza final: libera buffer e fecha arquivo
+    fim = clock();
+
+    printf("\nNúmero de comparações: %d\n",comp);
+    printf("Número de transferências: %d\n", (int)ceil(qtd / (double)LEITURA_BLOCO));
+    printf("Tempo de execução: %.9lf\n",((double)(fim - inicio)) / CLOCKS_PER_SEC); 
+     
+    // Limpeza final: libera buffer, fecha arquivo e libera a arvore
+    LiberaStar(&arv);
     free(buffer);
     fclose(arqComum);
 }
@@ -254,7 +243,7 @@ void binaryTree(int qtd, int situ, long long chave, char flag[]) {
 
     printf("Lendo registros do arquivo e inserindo na árvore binária...\n");
 
-    while ((fread(&registro, sizeof(RegistroArvore), 1, arqComum) == 1) && registrosInseridos < qtd) {
+    while ((fread(&registro, sizeof(Registro), 1, arqComum) == 1) && registrosInseridos < qtd) {
         fseek(arqArvore, 0, SEEK_END);                      // Move para o final do arquivo da árvore para inserir o novo registro
         registro.dir=-1;                                    // Inicializa os ponteiros do novo registro como 0
         registro.esq=-1;
@@ -276,8 +265,13 @@ void binaryTree(int qtd, int situ, long long chave, char flag[]) {
     printf("Árvore binária gerada com sucesso!\n");
     printf("Registros inseridos: %d\n", registrosInseridos);
 
-    printf("Procurando %lld na arvore binária\n", chave);
-    if(searchTreeBinary(chave, &registro)){                          // Se a busca pela chave for bem sucedida
+    int comp = 0; // Usado para guardar o numero de comparações
+
+    clock_t inicio, fim;
+    inicio = clock();
+
+    printf("\nProcurando %lld na arvore binária\n", chave);
+    if(searchTreeBinary(chave, &registro, &comp)){                          // Se a busca pela chave for bem sucedida
         printf("Registro encontrado!\n");
         if (strcmp(flag,"") != 0){
             printf("Chave: %lld\n", registro.chave);
@@ -289,6 +283,13 @@ void binaryTree(int qtd, int situ, long long chave, char flag[]) {
     else{                                                          // Se a busca não for bem sucedida
         printf("Registro não encontrado\n");
     }
+
+    fim = clock();
+
+    printf("\nNúmero de comparações: %d\n",comp);
+    printf("Número de transferências: %d\n",0);
+    printf("Tempo de execução: %.9lf\n",((double)(fim - inicio)) / CLOCKS_PER_SEC);
+
     fclose(arqComum);                       // Fecha o arquivo de registros
     fclose(arqArvore);                      // Fecha o arquivo com a árvore binária
 }
@@ -325,10 +326,8 @@ void bTree(int qtd, int situ, long long chave, char flag[]) {
         return;
     }
 
-    // Definições de tamanho: BLOCO = número máximo de registros por árvore,
     // LEITURA_BLOCO = quantos registros lemos de cada vez do disco
-    const int BLOCO = 10000;
-    const int LEITURA_BLOCO = 1000;
+    const int LEITURA_BLOCO = 50;
 
     // Buffer para leitura temporária de registros
     Registro *buffer = malloc(LEITURA_BLOCO * sizeof(Registro));
@@ -340,76 +339,70 @@ void bTree(int qtd, int situ, long long chave, char flag[]) {
 
     long totalLidos = 0;           // Contagem total de registros já lidos
     int registrosRestantes = qtd;  // Quantos ainda faltam processar
-    int encontrou = 0;             // Flag: 1 se encontrar a chave
+
+    
+    // 1) Inicializa uma nova árvore B vazia
+    ApontaPagina arv;
+    Inicializa(&arv);
+
+    // 2) Preenche a árvore com até BLOCO registros, lendo
+    //    em pedaços de LEITURA_BLOCO do arquivo
+    while (registrosRestantes > 0) {
+        // Calcula quantos ler neste pedaço
+        int paraLer = (registrosRestantes < LEITURA_BLOCO) ? registrosRestantes : LEITURA_BLOCO;
+
+        // Tenta ler do arquivo
+        long lidos = fread(buffer, sizeof(Registro), paraLer, arqComum);
+        if (lidos <= 0) {
+            // Fim de arquivo ou erro de leitura
+            break;
+        }
+
+        // Insere cada registro lido na árvore
+        for (int i = 0; i < lidos; i++) {
+            Insere(buffer[i], &arv);
+            totalLidos++;
+            registrosRestantes--;
+        }
+    }
+
+    // Exibe faixa de registros que compõem esta árvore
+    printf("Buscando na árvore B \n");
 
     // Prepara struct de busca apenas com a chave desejada
     Registro regPesquisa;
     regPesquisa.chave = chave;
 
-    // Loop principal: enquanto não achar e tiver registros
-    while (!encontrou && registrosRestantes > 0) {
-        // 1) Inicializa uma nova árvore B vazia para este bloco
-        ApontaPagina arv;
-        Inicializa(&arv);
+    int comp = 0;                   // Contador de Comparações
 
-        int cont = 0;  // Quantos registros inseridos nesta árvore de bloco
+    clock_t inicio, fim;
+    inicio = clock();
 
-        // 2) Preenche a árvore com até BLOCO registros, lendo
-        //    em pedaços de LEITURA_BLOCO do arquivo
-        while (cont < BLOCO && registrosRestantes > 0) {
-            // Calcula quantos ler neste pedaço
-            int paraLer = (BLOCO - cont < LEITURA_BLOCO) ? (BLOCO - cont) : LEITURA_BLOCO;
-            if (paraLer > registrosRestantes)
-                paraLer = registrosRestantes;
-
-            // Tenta ler do arquivo
-            long lidos = fread(buffer, sizeof(Registro), paraLer, arqComum);
-            if (lidos <= 0) {
-                // Fim de arquivo ou erro de leitura
-                break;
-            }
-
-            // Insere cada registro lido na árvore
-            for (int i = 0; i < lidos; i++) {
-                Insere(buffer[i], &arv);
-                cont++;
-                totalLidos++;
-                registrosRestantes--;
-            }
+    // 3) Pesquisa na árvore
+    if (Pesquisa(&regPesquisa, arv, &comp)) {
+        printf("Registro encontrado!\n");
+        // Se a flag “-p” foi passada, imprime detalhes do registro
+        if (strcmp(flag, "-p") == 0) {
+            printf("Chave: %lld\n", regPesquisa.chave);
+            printf("Dado 1: %lld\n", regPesquisa.dado1);
+            printf("Dado 2: %s\n", regPesquisa.dado2);
+            printf("Dado 3: %s\n", regPesquisa.dado3);
         }
-
-        // Se não leu nada, encerra (acabou o arquivo)
-        if (cont == 0) {
-            Libera(&arv);
-            break;
-        }
-
-        // Exibe faixa de registros que compõem esta árvore
-        printf("Buscando na árvore B com registros %ld até %ld...\n", totalLidos - cont, totalLidos - 1);
-
-        // 3) Pesquisa na árvore deste bloco
-        if (Pesquisa(&regPesquisa, arv)) {
-            printf("Registro encontrado!\n");
-            // Se a flag “-p” foi passada, imprime detalhes do registro
-            if (strcmp(flag, "-p") == 0) {
-                printf("Chave: %lld\n", regPesquisa.chave);
-                printf("Dado 1: %lld\n", regPesquisa.dado1);
-                printf("Dado 2: %s\n", regPesquisa.dado2);
-                printf("Dado 3: %s\n", regPesquisa.dado3);
-            }
-            encontrou = 1;
-        }
-
-        // 4) Libera estrutura da árvore antes de passar ao próximo bloco
-        Libera(&arv);
-    }
-
-    // Se percorreu tudo sem encontrar, avisa
-    if (!encontrou) {
+    } else {
+        // Se percorreu tudo sem encontrar, avisa
         printf("Registro não encontrado após percorrer %ld registros.\n", totalLidos);
     }
 
+
+    fim = clock();
+
+    printf("\nNúmero de comparações: %d\n",comp);
+    printf("Número de transferências: %d\n", (int)ceil(qtd / (double)LEITURA_BLOCO));
+    printf("Tempo de execução: %.9lf\n",((double)(fim - inicio)) / CLOCKS_PER_SEC);
+
+
     // Limpeza final
+    Libera(&arv);
     free(buffer);
     fclose(arqComum);
 }
@@ -470,7 +463,12 @@ void sequentialSearch(int qtd, int situ, long long chave, char flag[]) {
     fseek(arqComum, 0, SEEK_SET);       // Coloca o apontador do arquivo no início
     y.chave = chave;                    // Inicializa um registro com a chave a ser procurada
     
-    if (search(tabela, cont, itens_pagina, &y, arqComum)) {     // Se a busca for bem sucedida
+    int comp = 0;  // Contador de comparações
+    
+    clock_t inicio, fim;
+    inicio = clock();
+
+    if (search(tabela, cont, itens_pagina, &y, arqComum, &comp)) {     // Se a busca for bem sucedida
         printf("Registro encontrado!\n");
         if (strcmp(flag,"") != 0){
             printf("Chave: %lld\n", y.chave);
@@ -481,6 +479,12 @@ void sequentialSearch(int qtd, int situ, long long chave, char flag[]) {
     } else {                                                    // Se não for bem sucedida
         printf("Registro não encontrado!\n");
     }
+
+    fim = clock();
+
+    printf("\nNúmero de comparações: %d\n",comp);
+    printf("Número de transferências: %d\n", max_paginas);
+    printf("Tempo de execução: %.9lf\n",((double)(fim - inicio)) / CLOCKS_PER_SEC);
 
     free(tabela);               // Libera a tabela
     fclose(arqComum);           // Fecha o arquivo

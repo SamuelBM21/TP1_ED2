@@ -13,7 +13,7 @@ typedef struct Pagina{
 
 void Inicializa(ApontaPagina *arvore);
 void Libera(ApontaPagina *ap);
-int Pesquisa(Registro *x, ApontaPagina ap);
+int Pesquisa(Registro *x, ApontaPagina ap, int *comp);
 void Imprime(ApontaPagina arvore);
 void InsereNaPagina(ApontaPagina ap, Registro reg, ApontaPagina apDir);
 void Ins(Registro reg, ApontaPagina ap, short *cresceu, Registro *regRetorno, ApontaPagina *apRetorno);

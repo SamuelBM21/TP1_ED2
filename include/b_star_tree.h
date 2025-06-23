@@ -26,7 +26,7 @@ typedef struct PaginaStar {
 // Funções principais
 void InicializaStar(ApontaPaginaStar *arvore);
 void LiberaStar(ApontaPaginaStar *ap);
-int PesquisaStar(Registro *x, ApontaPaginaStar ap);
+int PesquisaStar(Registro *x, ApontaPaginaStar ap, int *comp);
 void InsereStar(Registro reg, ApontaPaginaStar *ap);
 
 #endif

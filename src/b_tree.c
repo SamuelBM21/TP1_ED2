@@ -38,19 +38,23 @@ Entrada: Endereço do registro com a chave a ser procurada e apontador para a p�
 Saída: --
 */
 
-int Pesquisa(Registro *x, ApontaPagina ap){
+int Pesquisa(Registro *x, ApontaPagina ap, int *comp){
     long i =1;
     if(ap == NULL) return 0;                                // Se chegou em uma página folha
 
-    while( i< ap->n && x->chave > ap->r[i-1].chave) i++;    // Loop para encontrar qual filho fazer a verificação 
+    while( i< ap->n && x->chave > ap->r[i-1].chave){   // Loop para encontrar qual filho fazer a verificação 
+        i++;  
+        (*comp)++;  
+    }
 
+    (*comp)++;
     if(x->chave == ap->r[i-1].chave){                       // Se a chave do registro for igual à procurada
         *x = ap->r[i-1];                                    // Modifica o registro, substituindo-o pelo encontrado   
         return 1;
     }
 
-    if(x->chave < ap->r[i-1].chave) return Pesquisa(x, ap->p[i-1]);         // Se a chave for menor, chama a função recursivamente para o filho da esquerda de i
-    else return Pesquisa(x, ap->p[i]);                                      // Se não, chama para a direita
+    if(x->chave < ap->r[i-1].chave) return Pesquisa(x, ap->p[i-1], comp);         // Se a chave for menor, chama a função recursivamente para o filho da esquerda de i
+    else return Pesquisa(x, ap->p[i], comp);                                      // Se não, chama para a direita
 }
 
 /*

@@ -5,6 +5,6 @@
 
 int generateBinaryTreeFile(char fileName[]);
 int insereArvBin(RegistroArvore inserido, FILE* arq);
-int searchTreeBinary(long long chave, RegistroArvore *registro);
+int searchTreeBinary(long long chave, RegistroArvore *registro, int *comp);
 
 #endif //FILE_BINARY_TREE_H

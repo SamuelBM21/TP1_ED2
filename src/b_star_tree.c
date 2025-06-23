@@ -22,25 +22,32 @@ void LiberaStar(ApontaPaginaStar *ap) {
 }
 
 // Função de pesquisa na árvore B*
-int PesquisaStar(Registro *x, ApontaPaginaStar ap) {
+int PesquisaStar(Registro *x, ApontaPaginaStar ap, int *comp) {
     int i;
     if (ap == NULL) return 0; // Árvore vazia, chave não encontrada
 
     if (ap->Pt == Interna) { // Se nó interno, desce na árvore
         i = 1;
         // Encontra o índice do ponteiro filho apropriado
-        while (i < ap->Union.Int.ni && x->chave > ap->Union.Int.ri[i - 1]) i++;
-
+        while (i < ap->Union.Int.ni && x->chave > ap->Union.Int.ri[i - 1]){ 
+            i++;
+            (*comp)++;
+        }
+        (*comp)++;
         if (x->chave < ap->Union.Int.ri[i - 1])
-            return PesquisaStar(x, ap->Union.Int.pi[i - 1]); // Vai para a esquerda
+            return PesquisaStar(x, ap->Union.Int.pi[i - 1], comp); // Vai para a esquerda
         else
-            return PesquisaStar(x, ap->Union.Int.pi[i]);     // Vai para a direita
+            return PesquisaStar(x, ap->Union.Int.pi[i], comp);     // Vai para a direita
     }
 
     // Nó folha: busca sequencial ordenada
     i = 1;
-    while (i < ap->Union.Ext.ne && x->chave > ap->Union.Ext.re[i - 1].chave) i++;
+    while (i < ap->Union.Ext.ne && x->chave > ap->Union.Ext.re[i - 1].chave){
+        i++;
+        (*comp)++;
+    }
 
+    (*comp)++;
     if (x->chave == ap->Union.Ext.re[i - 1].chave) { // Encontrou
         *x = ap->Union.Ext.re[i - 1]; // Copia os dados encontrados
         return 1;

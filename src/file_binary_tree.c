@@ -90,7 +90,7 @@ Função: Procurar por um registro na árvore binária.
 Entrada: Chave a ser procurada e um ponteiro para registro.
 Saída: 1 se a chave estiver na árvore e 0 se a chave não tiver na árvore
 */
-int searchTreeBinary(long long chave, RegistroArvore *registro){      
+int searchTreeBinary(long long chave, RegistroArvore *registro, int *comp){      
     FILE *a = fopen("binarytree.bin", "rb");                // Abre o arquivo da árvore binária
     if(a == NULL){                                          // Se ocorrer erro na abertura
         printf("Erro ao abrir o arquivo!\n");
@@ -99,13 +99,16 @@ int searchTreeBinary(long long chave, RegistroArvore *registro){
     RegistroArvore reg;                                           // Registro temporário para comparar
     while(fread(&reg, sizeof(RegistroArvore), 1, a) == 1){        // Enquanto houver registros para ler
         if(reg.chave == chave){                             // Se encotrou a chave retorna o registro por referência fecha o arquivo e retorna 1
+            (*comp)++;
             *registro = reg;
             fclose(a);
             return 1;
         }else if(reg.chave < chave){                        // Se a chave for maior que a chave do registro devemos ir pra direita na árvore binária
             fseek(a, reg.dir * sizeof(RegistroArvore), 0);
+            (*comp)++;
         }else{                                              // Se a chave for menor que a chave do registro devemos ir pra esquerda na árvore binária
             fseek(a, reg.esq * sizeof(RegistroArvore), 0);
+            (*comp)++;
         }
     }
     fclose(a);

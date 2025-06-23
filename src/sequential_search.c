@@ -31,7 +31,7 @@ Entrada: Vetor de registros, tamanho desse vetor, valor da chave e endereço par
 Saída: 1 se o registro for encontrado e 0 caso contrario.
 */
 
-int binary_search(Registro *pagina, int tamanho, long long chave, Registro *resultado) {
+int binary_search(Registro *pagina, int tamanho, long long chave, Registro *resultado, int *comp) {
     int esquerda = 0, direita = tamanho - 1;
 
     while (esquerda <= direita) {
@@ -39,11 +39,14 @@ int binary_search(Registro *pagina, int tamanho, long long chave, Registro *resu
 
         if (pagina[meio].chave == chave) {
             *resultado = pagina[meio];
+            (*comp)++;
             return 1;           // Encontrado
         } else if (pagina[meio].chave < chave) {
             esquerda = meio + 1;
+            (*comp)++;
         } else {
             direita = meio - 1;
+            (*comp)++;
         }
     }
 
@@ -58,7 +61,7 @@ Entrada: Tabela dos valores iniciais de cada pagina, tamanho dessa tabela, núme
 Saída: 1 se o registro for encontrado e 0 caso contrário.
 */
 
-int search(long long tab[], int tam, int itens_pagina,  Registro* reg, FILE *arq) {
+int search(long long tab[], int tam, int itens_pagina,  Registro* reg, FILE *arq, int *comp) {
     
     Registro* pagina = (Registro*)malloc(itens_pagina * sizeof(Registro));   // Aloca dinamicamente o array de registros
     if (pagina == NULL) {
@@ -69,7 +72,12 @@ int search(long long tab[], int tam, int itens_pagina,  Registro* reg, FILE *arq
     int i, quantitens;
     long desloc;
     i = 0;
-    while (i < tam && tab[i] <= reg->chave) i++;           // Procura pela página onde o item pode se encontrar
+    while (i < tam && tab[i] <= reg->chave){  // Procura pela página onde o item pode se encontrar
+        i++;           
+        (*comp)++;
+    }
+    (*comp)++; //Pegando a comparação de quando não entra no while
+
 
     if (i == 0) {                       // Caso a chave desejada seja menor que a 1a chave, o item não existe no arquivo
         free(pagina);                   // Libera o vetor de registros
@@ -89,7 +97,7 @@ int search(long long tab[], int tam, int itens_pagina,  Registro* reg, FILE *arq
         fseek (arq, desloc, SEEK_SET);
         fread (pagina, sizeof(Registro), quantitens, arq);                  // Lê a página desejada do arquivo
 
-        int encontrado = binary_search(pagina, quantitens, reg->chave, reg);        // Pesquisa binária na página lida
+        int encontrado = binary_search(pagina, quantitens, reg->chave, reg, comp);        // Pesquisa binária na página lida
         free(pagina);                                                               // Libera a memória
         return encontrado;
     }
