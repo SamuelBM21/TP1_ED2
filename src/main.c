@@ -22,6 +22,9 @@ void bStarTree(int qtd, int situ, long long chave, char flag[]);
 
 int main (int argc, char* argv[]) {
 
+    clock_t inicio, fim; // variaveis para saber o tempo de execução total do código
+    inicio = clock();
+
     if (argc != 5 && argc != 6){                    
         printf("Não foi passado o número mínimo de parâmetros. \n");
         return 0;
@@ -52,7 +55,8 @@ int main (int argc, char* argv[]) {
     // generateFile(1000000, RANDOMFILE,ORDER_RANDOM) ? printf("Arquivo aleatório gerado com sucesso\n") : printf("Falha ao gerar arquivo\n");
     // generateFile(1000000, ASCENDINGFILE,ORDER_ASCENDING) ? printf("Arquivo ascendente gerado com sucesso\n") : printf("Falha ao gerar arquivo\n");
     // generateFile(1000000, DESCENDINGFILE,ORDER_DESCENDING) ? printf("Arquivo descendente gerado com sucesso\n") : printf("Falha ao gerar arquivo\n");
-    
+    // binaryTreeGenerator(1000000) ? printf("Arquivo da Arvore Binária gerado com sucesso\n") : printf("Falha ao gerar arquivo\n");
+
     switch (metodo) {                                           // Qual o método de pesquisa escolhido 
         case 1:
             sequentialSearch(quantidade,situacao, chave, flag);       // Busca sequencial
@@ -70,6 +74,11 @@ int main (int argc, char* argv[]) {
         default:
             printf("Opção inválida. Tente novamente.\n");
     }
+
+    fim = clock();
+
+    printf("\nTempo de execução: %.6f\n\n",((double)(fim - inicio)) / CLOCKS_PER_SEC);
+
     return 0;
 }
 
@@ -105,6 +114,9 @@ void bStarTree(int qtd, int situ, long long chave, char flag[]) {
         printf("Erro ao abrir o arquivo para leitura\n");
         return;
     }
+
+    clock_t inicio_indice, fim_indice; // Variaveis para saber o tempo de criação dos indices
+    inicio_indice = clock();
 
     const int LEITURA_BLOCO = 50; // Quantidade de registros lida por vez do disco
 
@@ -149,6 +161,7 @@ void bStarTree(int qtd, int situ, long long chave, char flag[]) {
         }
     }
 
+    fim_indice = clock();
 
     // Informando ao Usuario
     printf("Buscando na árvore B*\n");
@@ -182,7 +195,8 @@ void bStarTree(int qtd, int situ, long long chave, char flag[]) {
 
     printf("\nNúmero de comparações: %d\n",comp);
     printf("Número de transferências: %d\n", (int)ceil(qtd / (double)LEITURA_BLOCO));
-    printf("Tempo de execução: %.9lf\n",((double)(fim - inicio)) / CLOCKS_PER_SEC); 
+    printf("Tempo de criação do índice: %.6f\n",((double)(fim_indice - inicio_indice)) / CLOCKS_PER_SEC);
+    printf("Tempo de pesquisa: %.6lf\n",((double)(fim - inicio)) / CLOCKS_PER_SEC); 
      
     // Limpeza final: libera buffer, fecha arquivo e libera a arvore
     LiberaStar(&arv);
@@ -200,99 +214,53 @@ Saída: --
 */
 
 void binaryTree(int qtd, int situ, long long chave, char flag[]) {
-    FILE *arqComum;
-    printf(">> Gerando arquivo de árvore binária...\n");
-
-    switch (situ) {         // Qual a situação do arquivo
-        case 1:             // Caso o arquivo desejado seja ordenado ascendentemente
-            arqComum = fopen(ASCENDINGFILE, "rb");          // Abre o arquivo 
-            if (arqComum == NULL) {                         // Se ocorreu algum erro na abertura
-                printf("Erro ao abrir o arquivo para leitura\n");
-                return;
-            }
-            break;
-        case 2:             // Caso o arquivo desejado seja ordenado descendentemente
-            arqComum = fopen(DESCENDINGFILE, "rb");         // Abre o arquivo
-            if (arqComum == NULL) {                         // Se ocorreu algum erro na abertura
-                printf("Erro ao abrir o arquivo para leitura\n");
-                return;
-            }
-            break;
-
-        case 3:             // Caso o arquivo desejado seja aleatório
-            arqComum = fopen(RANDOMFILE, "rb");             // Abre o arquivo
-            if (arqComum == NULL) {                         // Se ocorreu algum erro na abertura
-                printf("Erro ao abrir o arquivo para leitura\n");
-                return;
-            }
-            break;
-        default:            // Caso a opção escolhida não seja possível
-            printf("Opção de situacao de arquivo inválida.\n");
-            return;
+    
+    // Verifica qual é a situação do arquivo que o usuario pede
+    switch(situ){
+        case 1: printf("Arvore Binaria só pode ser feita com o arquivo aleatório"); return;
+        case 2: printf("Arvore Binaria só pode ser feita com o arquivo aleatório"); return;
+        case 3: break;
+        default: printf("Opção de situação de arquivo inválida.\n"); return;
     }
-
-    FILE *arqArvore = fopen(BINARYTREEFILE, "w+b");                     // Abre o arquivo da árvore binária para escrita e leitura
-    if (arqArvore == NULL) {                                            // Se ocorreu falha na abertura
-        printf("Erro ao abrir o arquivo da árvore binária\n");        
-        fclose(arqComum);                                               // Fecha o arquivo
+    
+    // abre o arquivo da arvore binaria
+    FILE *arqArvore = fopen(BINARYTREEFILE, "rb");
+    if (arqArvore == NULL) {
+        printf("Erro ao abrir o arquivo da árvore binária!\n");
         return;
     }
 
-    RegistroArvore registro;
-    int registrosInseridos = 0;
 
-    printf("Lendo registros do arquivo e inserindo na árvore binária...\n");
-
-    while ((fread(&registro, sizeof(Registro), 1, arqComum) == 1) && registrosInseridos < qtd) {
-        fseek(arqArvore, 0, SEEK_END);                      // Move para o final do arquivo da árvore para inserir o novo registro
-        registro.dir=-1;                                    // Inicializa os ponteiros do novo registro como 0
-        registro.esq=-1;
-
-        fwrite(&registro, sizeof(RegistroArvore), 1, arqArvore);  // Escreve o registro na posição final 
-        fflush(arqArvore);
-
-        fseek(arqArvore, 0, SEEK_SET);                      // Volta o ponteiro do arquivo para o início
-
-        if (insereArvBin(registro, arqArvore)) {            // Se conseguiu inserir na árvore
-            registrosInseridos++;                           // Incrementa o número de registros inseridos
-        }   
-
-        if ((registrosInseridos) % 10000 == 0) {            // Mostra progresso a cada 10000 registros
-            printf("Processados: %d registros\n", registrosInseridos );
-        }
-    }
-
-    printf("Árvore binária gerada com sucesso!\n");
-    printf("Registros inseridos: %d\n", registrosInseridos);
-
-    int comp = 0; // Usado para guardar o numero de comparações
+    RegistroArvore registroBusca;
+    int comp = 0;  // Numero de comparações na busca
+    int leitura = 0; // Numero de Leituras na busca
 
     clock_t inicio, fim;
     inicio = clock();
 
-    printf("\nProcurando %lld na arvore binária\n", chave);
-    if(searchTreeBinary(chave, &registro, &comp)){                          // Se a busca pela chave for bem sucedida
+    printf("\nProcurando %lld na árvore binária...\n", chave);
+    if (searchTreeBinary(chave, &registroBusca, &comp, arqArvore, qtd, &leitura)) {
         printf("Registro encontrado!\n");
-        if (strcmp(flag,"") != 0){
-            printf("Chave: %lld\n", registro.chave);
-            printf("Dado 1: %lld\n", registro.dado1);
-            printf("Dado 2: %s\n", registro.dado2);
-            printf("Dado 3: %s\n", registro.dado3);
+        if (strcmp(flag, "") != 0) {
+            printf("Chave: %lld\n", registroBusca.chave);
+            printf("Dado 1: %lld\n", registroBusca.dado1);
+            printf("Dado 2: %s\n", registroBusca.dado2);
+            printf("Dado 3: %s\n", registroBusca.dado3);
         }
-    }
-    else{                                                          // Se a busca não for bem sucedida
-        printf("Registro não encontrado\n");
+    } else {
+        printf("Registro não encontrado.\n");
     }
 
     fim = clock();
 
-    printf("\nNúmero de comparações: %d\n",comp);
-    printf("Número de transferências: %d\n",0);
-    printf("Tempo de execução: %.9lf\n",((double)(fim - inicio)) / CLOCKS_PER_SEC);
-
-    fclose(arqComum);                       // Fecha o arquivo de registros
-    fclose(arqArvore);                      // Fecha o arquivo com a árvore binária
+    printf("\nNúmero de comparações: %d\n", comp);
+    printf("Número de transferências: %d\n", leitura);
+    printf("Tempo de criação do índice: %d\n",0);
+    printf("Tempo de pesquisa: %.6lf\n",((double)(fim - inicio)) / CLOCKS_PER_SEC);
+    
+    fclose(arqArvore);
 }
+
 
 /*
 Nome: bTree
@@ -325,6 +293,9 @@ void bTree(int qtd, int situ, long long chave, char flag[]) {
         printf("Erro ao abrir o arquivo para leitura\n");
         return;
     }
+
+    clock_t inicio_indice, fim_indice; // Variaveis para saber o tempo de criação dos indices
+    inicio_indice = clock();
 
     // LEITURA_BLOCO = quantos registros lemos de cada vez do disco
     const int LEITURA_BLOCO = 50;
@@ -366,6 +337,8 @@ void bTree(int qtd, int situ, long long chave, char flag[]) {
         }
     }
 
+    fim_indice = clock();
+
     // Exibe faixa de registros que compõem esta árvore
     printf("Buscando na árvore B \n");
 
@@ -398,7 +371,8 @@ void bTree(int qtd, int situ, long long chave, char flag[]) {
 
     printf("\nNúmero de comparações: %d\n",comp);
     printf("Número de transferências: %d\n", (int)ceil(qtd / (double)LEITURA_BLOCO));
-    printf("Tempo de execução: %.9lf\n",((double)(fim - inicio)) / CLOCKS_PER_SEC);
+    printf("Tempo de criação do índice: %.6f\n",((double)(fim_indice - inicio_indice)) / CLOCKS_PER_SEC);
+    printf("Tempo de pesquisa: %.6lf\n",((double)(fim - inicio)) / CLOCKS_PER_SEC);
 
 
     // Limpeza final
@@ -484,7 +458,8 @@ void sequentialSearch(int qtd, int situ, long long chave, char flag[]) {
 
     printf("\nNúmero de comparações: %d\n",comp);
     printf("Número de transferências: %d\n", max_paginas);
-    printf("Tempo de execução: %.9lf\n",((double)(fim - inicio)) / CLOCKS_PER_SEC);
+    printf("Tempo de criação do índice: %d\n",0);
+    printf("Tempo de pesquisa: %.6lf\n",((double)(fim - inicio)) / CLOCKS_PER_SEC);
 
     free(tabela);               // Libera a tabela
     fclose(arqComum);           // Fecha o arquivo

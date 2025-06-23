@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <string.h>
 #include "file_binary_tree.h"
 #include "register.h"
 
@@ -31,58 +32,65 @@ Entrada: Registro para ser inserido e arquivo onde vai ser inserido
 Saída: 1 para sucesso e 0 para erro
 */
 
-int insereArvBin(RegistroArvore inserido, FILE* arq){
-    RegistroArvore* atual = (RegistroArvore*) malloc(sizeof(RegistroArvore));             // Aloca um registro
-    long long posicaoinserido = ftell(arq);                             // Posição no arquivo onde o registro será inserido
-    fseek(arq, 0, SEEK_SET);                                            // Volta o ponteiro pro início do arquivo
+int insereArvBin(RegistroArvore inserido, FILE* arq) {
+    fseek(arq, 0, SEEK_END);
+    long long posicaoinserido = ftell(arq) / sizeof(RegistroArvore);
 
-    if (posicaoinserido == 0){                                          // Caso seja o primeiro registro
-        inserido.esq = inserido.dir = -1;                               // Inicia os apontadores do registro
-        fwrite(&inserido, sizeof(RegistroArvore), 1, arq);                    // Escreve o registro no arquivo
-        free(atual);
-        return 1;                                                       // Retorna 1
+    // Se o arquivo está vazio (árvore vazia)
+    if (posicaoinserido == 0) {
+        inserido.esq = inserido.dir = -1;
+        fwrite(&inserido, sizeof(RegistroArvore), 1, arq);
+        return 1;
     }
 
-    long long posicaoatual = 0;
+    long long posAtual = 0;
+    RegistroArvore atual;
 
-    while (1){
-        posicaoatual = ftell(arq);                                      // Posição atual do ponteiro do pai no arquivo
-        fread(atual, sizeof(RegistroArvore), 1, arq);                         
-        if (inserido.chave > atual->chave){                             // Se o registro que vai ser inserido é maior que o atual
-            if (atual->dir == -1){                                      // Caso o nó a direita esteja vazio
-                inserido.dir = inserido.esq = -1;                       // Inicia os apontadores do nó que vai ser inserido
-                atual->dir = posicaoinserido;                           // O atual aponta pra posição onde o novo registro será inserido 
-                fseek(arq, posicaoatual, 0);                            // Volta o ponteiro pra posição atual inicial
-                fwrite(atual, sizeof(RegistroArvore), 1, arq);                // Reescreve o pai na sua mesma posição com os apontadores atualizados
-                fseek(arq, posicaoinserido, SEEK_SET);                  // Volta o ponteiro pra posição onde o novo registro será inserido
-                fwrite(&inserido, sizeof(RegistroArvore), 1, arq);            // Escreve o registro no arquivo
-                free(atual);                                            // Libera a memória do atual
+    while (1) {
+        fseek(arq, posAtual * sizeof(RegistroArvore), SEEK_SET);
+        fread(&atual, sizeof(RegistroArvore), 1, arq);
+
+        if (inserido.chave < atual.chave) {
+            if (atual.esq == -1) {
+                inserido.esq = inserido.dir = -1;
+                atual.esq = posicaoinserido;
+
+                // Atualiza o pai
+                fseek(arq, posAtual * sizeof(RegistroArvore), SEEK_SET);
+                fwrite(&atual, sizeof(RegistroArvore), 1, arq);
+
+                // Insere o novo nó
+                fseek(arq, 0, SEEK_END);
+                fwrite(&inserido, sizeof(RegistroArvore), 1, arq);
+
                 return 1;
+            } else {
+                posAtual = atual.esq;
             }
-            fseek(arq, atual->dir* sizeof(RegistroArvore), 0);                // Move o ponteiro pra direita
-            continue;
-        }
-        if (inserido.chave < atual->chave){                             // Se o registro que vai ser inserido é menor que o atual
-            if (atual->esq == -1){                                      // Caso o nó a esquerda esteja vazio  
-                inserido.dir = inserido.esq = -1;                       // Inicia os apontadores do nó que vai ser inserido
-                atual->esq = posicaoinserido;                           // O atual aponta pra posição onde o novo registro será inserido
-                fseek(arq, posicaoatual, 0);                            // Volta o ponteiro pra posição atual inicial
-                fwrite(atual, sizeof(RegistroArvore), 1, arq);                // Reescreve o pai na sua mesma posição com os apontadores atualizados
-                fseek(arq, posicaoinserido, SEEK_SET);                  // Volta o ponteiro pra posição onde o novo registro será inserido
-                fwrite(&inserido, sizeof(RegistroArvore), 1, arq);            // Escreve o registro no arquivo
-                free(atual);                                            // Libera a memória do atual
+        } else if (inserido.chave > atual.chave) {
+            if (atual.dir == -1) {
+                inserido.esq = inserido.dir = -1;
+                atual.dir = posicaoinserido;
+
+                // Atualiza o pai
+                fseek(arq, posAtual * sizeof(RegistroArvore), SEEK_SET);
+                fwrite(&atual, sizeof(RegistroArvore), 1, arq);
+
+                // Insere o novo nó
+                fseek(arq, 0, SEEK_END);
+                fwrite(&inserido, sizeof(RegistroArvore), 1, arq);
+
                 return 1;
+            } else {
+                posAtual = atual.dir;
             }
-            fseek(arq, atual->esq * sizeof(RegistroArvore), 0);               // Move o ponteiro pra esquerda
-            continue;
-        }
-        if (inserido.chave == atual->chave){                            // Se for igual não insere
-            free(atual);
-            return 0;                                                   // Retorna 0 pois não inseriu
+        } else {
+            // Chave já existe, não insere
+            return 0;
         }
     }
-    return 0;                                                           // Retorna 0 pois não inseriu 
 }
+
 
 /*
 Nome: searchTreeBinary
@@ -90,27 +98,33 @@ Função: Procurar por um registro na árvore binária.
 Entrada: Chave a ser procurada e um ponteiro para registro.
 Saída: 1 se a chave estiver na árvore e 0 se a chave não tiver na árvore
 */
-int searchTreeBinary(long long chave, RegistroArvore *registro, int *comp){      
-    FILE *a = fopen("binarytree.bin", "rb");                // Abre o arquivo da árvore binária
-    if(a == NULL){                                          // Se ocorrer erro na abertura
-        printf("Erro ao abrir o arquivo!\n");
-        return 0;
-    }
-    RegistroArvore reg;                                           // Registro temporário para comparar
-    while(fread(&reg, sizeof(RegistroArvore), 1, a) == 1){        // Enquanto houver registros para ler
-        if(reg.chave == chave){                             // Se encotrou a chave retorna o registro por referência fecha o arquivo e retorna 1
-            (*comp)++;
-            *registro = reg;
-            fclose(a);
-            return 1;
-        }else if(reg.chave < chave){                        // Se a chave for maior que a chave do registro devemos ir pra direita na árvore binária
-            fseek(a, reg.dir * sizeof(RegistroArvore), 0);
-            (*comp)++;
-        }else{                                              // Se a chave for menor que a chave do registro devemos ir pra esquerda na árvore binária
-            fseek(a, reg.esq * sizeof(RegistroArvore), 0);
-            (*comp)++;
+int searchTreeBinary(long long chave, RegistroArvore *registro, int *comp, FILE *a, long long quantidade, int *leitura) {
+    long long pos = 0; // Começa na raiz (posição 0)
+    RegistroArvore reg; // Variável que carrega o registro atual durante a busca
+
+    // Loop de navegação pela árvore
+    while (pos < quantidade) { // Enquanto a posição estiver dentro do limite considerado
+        
+        // Posiciona no arquivo no registro atual
+        fseek(a, pos * sizeof(RegistroArvore), SEEK_SET);
+        if (fread(&reg, sizeof(RegistroArvore), 1, a) != 1) {
+            (*leitura)++;
+            break; // Leitura inválida
+        }
+        (*leitura)++;
+        (*comp)++; // Incrementa o número de comparações realizadas
+
+        if (reg.chave == chave) {
+            *registro = reg; // Copia o registro encontrado para o ponteiro passado
+            return 1; // Achou
+        } else if (chave < reg.chave) {  // Decide se vai para a subárvore da esquerda
+            if (reg.esq == -1 || reg.esq >= quantidade) break; // Se não tem filho à esquerda ou se ele está fora do limite de quantidade
+            pos = reg.esq;
+        } else {  // Decide se vai para a subárvore da direita
+            if (reg.dir == -1 || reg.dir >= quantidade) break; // Se não tem filho à direita ou se ele está fora do limite de quantidade
+            pos = reg.dir;
         }
     }
-    fclose(a);
-    return 0;                                               // Se chegou aqui retorna 0 pois o registro procurado não está na árvore
+
+    return 0; // Não encontrado
 }

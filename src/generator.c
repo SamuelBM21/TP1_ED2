@@ -4,6 +4,7 @@
 #include <time.h>
 #include "generator.h"
 #include "register.h"
+#include "file_binary_tree.h"
 
 void numeroPorExtenso(int numero, char *saida) {
     const char *unidades[] = {"", "um", "dois", "três", "quatro", "cinco", "seis", "sete", "oito", "nove"};
@@ -101,7 +102,7 @@ Entrada: Número de linhas, nome do arquivo e tipo do arquivo.
 Saída: 1 caso foi gerado de forma correta e 0 caso não tenha sido possível gerar.
 */
 
-#define BUFFER_SIZE 1000   // Definindo um tamanho de buffer para que possa ser escrito no arquivo
+#define BUFFER_SIZE 50   // Definindo um tamanho de buffer para que possa ser escrito no arquivo
 
 int generateFile(long long numLines, const char *nameFile, int mode) {
     FILE *arq = fopen(nameFile, "wb");
@@ -156,5 +157,67 @@ int generateFile(long long numLines, const char *nameFile, int mode) {
 
     free(chaves);
     fclose(arq);
+    return 1;
+}
+
+
+int binaryTreeGenerator(int qtd) {
+    FILE *arqComum;
+
+    
+    arqComum = fopen("dados3.bin", "rb");
+    if (arqComum == NULL) {
+        printf("Erro ao abrir o arquivo de dados.\n");
+        return 0;
+    }
+
+    FILE *arqArvore = fopen("binarytree.bin", "w+b");
+    if (arqArvore == NULL) {
+        printf("Erro ao abrir o arquivo da árvore binária.\n");
+        fclose(arqComum);
+        return 0;
+    }
+
+    printf(">> Gerando arquivo de árvore binária...\n");
+
+    Registro bufferRegistros[BUFFER_SIZE];
+
+    int totalInseridos = 0;
+    int leitura = 0;
+
+    while (totalInseridos < qtd) {
+        int restante = qtd - totalInseridos;
+        int quantidade = (restante > BUFFER_SIZE) ? BUFFER_SIZE : restante;
+
+        size_t lidos = fread(bufferRegistros, sizeof(Registro), quantidade, arqComum);
+        if (lidos == 0) break;
+
+        leitura++;
+
+        for (size_t i = 0; i < lidos; i++) {
+            RegistroArvore regArv;
+            regArv.chave = bufferRegistros[i].chave;
+            regArv.dado1 = bufferRegistros[i].dado1;
+            strcpy(regArv.dado2, bufferRegistros[i].dado2);
+            strcpy(regArv.dado3, bufferRegistros[i].dado3);
+            regArv.esq = -1;
+            regArv.dir = -1;
+
+            if (insereArvBin(regArv, arqArvore)) {
+                totalInseridos++;
+            }
+
+            if (totalInseridos % 10000 == 0) {
+                printf("Processados: %d registros\n", totalInseridos);
+            }
+        }
+    }
+
+    printf("Árvore binária gerada com sucesso!\n");
+    printf("Registros inseridos: %d\n", totalInseridos);
+
+    fclose(arqComum);
+    fclose(arqArvore);
+
     return 1;
 }
