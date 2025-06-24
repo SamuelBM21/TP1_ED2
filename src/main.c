@@ -91,7 +91,7 @@ Saída: --
 */
 
 void bStarTree(int qtd, int situ, long long chave, char flag[]) {
-    printf(">> Buscando na árvore B* por blocos...\n\n");
+    printf(">> Criando a árvore B*...\n\n");
 
     // Ponteiro para o arquivo de registros de entrada
     FILE *arqComum;
@@ -130,7 +130,7 @@ void bStarTree(int qtd, int situ, long long chave, char flag[]) {
 
     int registrosRestantes = qtd;  // Quantos registros ainda precisamos processar
     long totalLidos = 0;    // Contador total de registros lidos até o momento
-
+    long comp_ins = 0;
 
     // 1) Inicializa uma nova árvore B* vazia
     ApontaPaginaStar arv;
@@ -150,7 +150,7 @@ void bStarTree(int qtd, int situ, long long chave, char flag[]) {
 
         // Insere cada registro lido na árvore temporária
         for (long i = 0; i < lidos; i++) {
-            InsereStar(buffer[i], &arv);
+            InsereStar(buffer[i], &arv, &comp_ins);
             totalLidos++;
             registrosRestantes--;
         }
@@ -163,8 +163,14 @@ void bStarTree(int qtd, int situ, long long chave, char flag[]) {
 
     fim_indice = clock();
 
+    printf("Arvore B* criada com sucesso!\n");
+
+    printf("Numero de comparações na criação: %ld\n", comp_ins);
+    printf("Tempo de criação do índice: %.6f\n",((double)(fim_indice - inicio_indice)) / CLOCKS_PER_SEC);
+    printf("Número de transferências: %d\n", (int)ceil(qtd / (double)LEITURA_BLOCO));
+
     // Informando ao Usuario
-    printf("Buscando na árvore B*\n");
+    printf("\nBuscando na árvore B*\n");
 
     int comp = 0; // Usado para guardar o numero de comparações
 
@@ -194,8 +200,7 @@ void bStarTree(int qtd, int situ, long long chave, char flag[]) {
     fim = clock();
 
     printf("\nNúmero de comparações: %d\n",comp);
-    printf("Número de transferências: %d\n", (int)ceil(qtd / (double)LEITURA_BLOCO));
-    printf("Tempo de criação do índice: %.6f\n",((double)(fim_indice - inicio_indice)) / CLOCKS_PER_SEC);
+    printf("Número de transferências: %d\n", 0);
     printf("Tempo de pesquisa: %.6lf\n",((double)(fim - inicio)) / CLOCKS_PER_SEC); 
      
     // Limpeza final: libera buffer, fecha arquivo e libera a arvore

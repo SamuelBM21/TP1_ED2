@@ -27,6 +27,6 @@ typedef struct PaginaStar {
 void InicializaStar(ApontaPaginaStar *arvore);
 void LiberaStar(ApontaPaginaStar *ap);
 int PesquisaStar(Registro *x, ApontaPaginaStar ap, int *comp);
-void InsereStar(Registro reg, ApontaPaginaStar *ap);
+void InsereStar(Registro reg, ApontaPaginaStar *ap,  long *comp);
 
 #endif

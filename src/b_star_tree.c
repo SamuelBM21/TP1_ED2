@@ -57,26 +57,32 @@ int PesquisaStar(Registro *x, ApontaPaginaStar ap, int *comp) {
 }
 
 // Insere um registro diretamente em uma folha específica (sem tratar splits)
-void insere_na_folha_especifica(ApontaPaginaStar folha, Registro reg) {
+void insere_na_folha_especifica(ApontaPaginaStar folha, Registro reg, long *comp) {
     int i = folha->Union.Ext.ne;
     // Desloca registros maiores para frente
     while (i > 0 && reg.chave < folha->Union.Ext.re[i - 1].chave) {
+        (*comp)++; // contando o numero de comparações
         folha->Union.Ext.re[i] = folha->Union.Ext.re[i - 1];
         i--;
     }
+    if(i>0) (*comp)++;
+
     folha->Union.Ext.re[i] = reg; // Insere na posição correta
     folha->Union.Ext.ne++;        // Incrementa o número de registros na folha
 }
 
 // Insere uma chave e um ponteiro no nó interno (sem tratar splits)
-static void insere_no_no_interno(ApontaPaginaStar ap, long long chave, ApontaPaginaStar filho_dir) {
+static void insere_no_no_interno(ApontaPaginaStar ap, long long chave, ApontaPaginaStar filho_dir, long *comp) {
     int i = ap->Union.Int.ni;
     // Desloca chaves maiores para frente
     while (i > 0 && chave < ap->Union.Int.ri[i - 1]) {
+        (*comp)++;
         ap->Union.Int.ri[i] = ap->Union.Int.ri[i - 1];
         ap->Union.Int.pi[i + 1] = ap->Union.Int.pi[i];
         i--;
     }
+    if (i > 0) (*comp)++;
+
     // Insere chave e ponteiro na posição correta
     ap->Union.Int.ri[i] = chave;
     ap->Union.Int.pi[i + 1] = filho_dir;
@@ -84,11 +90,11 @@ static void insere_no_no_interno(ApontaPaginaStar ap, long long chave, ApontaPag
 }
 
 // Função recursiva que gerencia a inserção na árvore
-static void insere_recursivo(Registro reg, ApontaPaginaStar ap, short *cresceu, long long *chave_retorno, ApontaPaginaStar *ap_retorno) {
+static void insere_recursivo(Registro reg, ApontaPaginaStar ap, short *cresceu, long long *chave_retorno, ApontaPaginaStar *ap_retorno, long *comp) {
     if (ap->Pt == Externa) { // Caso base: nó folha
         if (ap->Union.Ext.ne < MM) {
             // Caso haja espaço na folha, insere diretamente
-            insere_na_folha_especifica(ap, reg);
+            insere_na_folha_especifica(ap, reg, comp);
             *cresceu = 0;
             return;
         }
@@ -103,9 +109,12 @@ static void insere_recursivo(Registro reg, ApontaPaginaStar ap, short *cresceu, 
         // Insere o novo registro na posição correta no vetor temporário
         int j = MM;
         while (j > 0 && reg.chave < temp[j - 1].chave) {
+            (*comp)++;
             temp[j] = temp[j - 1];
             j--;
         }
+        if (j > 0) (*comp)++; // comparação que quebrou o while
+
         temp[j] = reg;
 
         // Divide os registros entre a folha atual e a nova folha
@@ -128,17 +137,21 @@ static void insere_recursivo(Registro reg, ApontaPaginaStar ap, short *cresceu, 
     // Caso seja nó interno
     int i = ap->Union.Int.ni - 1;
     // Encontra o filho apropriado para descer
-    while (i >= 0 && reg.chave < ap->Union.Int.ri[i]) i--;
+    while (i >= 0 && reg.chave < ap->Union.Int.ri[i]){
+        i--;
+        (*comp)++;
+    }
+    if (i >= 0) (*comp)++;
     i++;
 
     // Chamada recursiva no filho
-    insere_recursivo(reg, ap->Union.Int.pi[i], cresceu, chave_retorno, ap_retorno);
+    insere_recursivo(reg, ap->Union.Int.pi[i], cresceu, chave_retorno, ap_retorno, comp);
 
     if (!(*cresceu)) return; // Se o filho não cresceu, encerra
 
     if (ap->Union.Int.ni < MM) {
         // Se há espaço no nó interno, insere chave e ponteiro do filho
-        insere_no_no_interno(ap, *chave_retorno, *ap_retorno);
+        insere_no_no_interno(ap, *chave_retorno, *ap_retorno, comp);
         *cresceu = 0;
         return;
     }
@@ -157,10 +170,13 @@ static void insere_recursivo(Registro reg, ApontaPaginaStar ap, short *cresceu, 
     // Insere a nova chave e ponteiro na posição correta
     int j = MM;
     while (j > 0 && *chave_retorno < temp_ri[j - 1]) {
+        (*comp)++;
         temp_ri[j] = temp_ri[j - 1];
         temp_pi[j + 1] = temp_pi[j];
         j--;
     }
+    if (j > 0) (*comp)++;
+
     temp_ri[j] = *chave_retorno;
     temp_pi[j + 1] = *ap_retorno;
 
@@ -189,7 +205,7 @@ static void insere_recursivo(Registro reg, ApontaPaginaStar ap, short *cresceu, 
 }
 
 // Função principal de inserção pública na árvore
-void InsereStar(Registro reg, ApontaPaginaStar *ap) {
+void InsereStar(Registro reg, ApontaPaginaStar *ap, long *comp) {
     short cresceu;
     long long chave_retorno;
     ApontaPaginaStar ap_retorno;
@@ -204,7 +220,7 @@ void InsereStar(Registro reg, ApontaPaginaStar *ap) {
     }
 
     // Chamada recursiva para inserir
-    insere_recursivo(reg, *ap, &cresceu, &chave_retorno, &ap_retorno);
+    insere_recursivo(reg, *ap, &cresceu, &chave_retorno, &ap_retorno, comp);
 
     if (cresceu) {
         // Se a raiz cresceu, cria uma nova raiz
