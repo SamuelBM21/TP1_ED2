@@ -45,7 +45,7 @@ int main (int argc, char* argv[]) {
     char flag[10] = "";
     if (argc == 6){
         strcpy(flag,argv[5]);
-        if(strcmp(flag,"-p") != 0){
+        if(strcmp(flag,"[-P]") != 0){
             printf("Esta flag '%s' não existe. \n", flag);
             return 0;
         }
@@ -55,7 +55,6 @@ int main (int argc, char* argv[]) {
     // generateFile(1000000, RANDOMFILE,ORDER_RANDOM) ? printf("Arquivo aleatório gerado com sucesso\n") : printf("Falha ao gerar arquivo\n");
     // generateFile(1000000, ASCENDINGFILE,ORDER_ASCENDING) ? printf("Arquivo ascendente gerado com sucesso\n") : printf("Falha ao gerar arquivo\n");
     // generateFile(1000000, DESCENDINGFILE,ORDER_DESCENDING) ? printf("Arquivo descendente gerado com sucesso\n") : printf("Falha ao gerar arquivo\n");
-    // binaryTreeGenerator(1000000) ? printf("Arquivo da Arvore Binária gerado com sucesso\n") : printf("Falha ao gerar arquivo\n");
 
     switch (metodo) {                                           // Qual o método de pesquisa escolhido 
         case 1:
@@ -167,7 +166,7 @@ void bStarTree(int qtd, int situ, long long chave, char flag[]) {
 
     printf("Numero de comparações na criação: %ld\n", comp_ins);
     printf("Tempo de criação do índice: %.6f\n",((double)(fim_indice - inicio_indice)) / CLOCKS_PER_SEC);
-    printf("Número de transferências: %d\n", (int)ceil(qtd / (double)LEITURA_BLOCO));
+    printf("Número de transferências na criação: %d\n", (int)ceil(qtd / (double)LEITURA_BLOCO));
 
     // Informando ao Usuario
     printf("\nBuscando na árvore B*\n");
@@ -186,7 +185,7 @@ void bStarTree(int qtd, int situ, long long chave, char flag[]) {
     if (PesquisaStar(&regPesquisa, arv, &comp)) {
         printf("Registro encontrado!\n");
         // Se a flag "-p" estiver ativa, exibe o conteúdo completo
-        if (strcmp(flag, "-p") == 0) {
+        if (strcmp(flag, "[-P]") == 0) {
             printf("Chave: %lld\n", regPesquisa.chave);
             printf("Dado 1: %lld\n", regPesquisa.dado1);
             printf("Dado 2: %s\n", regPesquisa.dado2);
@@ -220,14 +219,29 @@ Saída: --
 
 void binaryTree(int qtd, int situ, long long chave, char flag[]) {
     
+    const char *arqDados;
+
     // Verifica qual é a situação do arquivo que o usuario pede
     switch(situ){
-        case 1: printf("Arvore Binaria só pode ser feita com o arquivo aleatório"); return;
-        case 2: printf("Arvore Binaria só pode ser feita com o arquivo aleatório"); return;
-        case 3: break;
+        case 1: arqDados = ASCENDINGFILE; break;
+        case 2: arqDados = DESCENDINGFILE; break;
+        case 3: arqDados = RANDOMFILE; break;
         default: printf("Opção de situação de arquivo inválida.\n"); return;
     }
+
+    long leitura_indice = 0;
+    long comp_indice = 0;
+    clock_t inicio_indice, fim_indice; // Variaveis para saber o tempo de criação dos indices
+    inicio_indice = clock();
+
+    binaryTreeGenerator(qtd, arqDados, &leitura_indice, &comp_indice) ? printf("\nArquivo da Arvore Binária gerado com sucesso\n") : printf("\nFalha ao gerar arquivo\n");
     
+    fim_indice = clock();
+
+    printf("Numero de comparações na criação: %ld\n", comp_indice);
+    printf("Tempo de criação do índice: %.6f\n",((double)(fim_indice - inicio_indice)) / CLOCKS_PER_SEC);
+    printf("Número de transferências na criação: %ld\n", leitura_indice);
+
     // abre o arquivo da arvore binaria
     FILE *arqArvore = fopen(BINARYTREEFILE, "rb");
     if (arqArvore == NULL) {
@@ -246,7 +260,7 @@ void binaryTree(int qtd, int situ, long long chave, char flag[]) {
     printf("\nProcurando %lld na árvore binária...\n", chave);
     if (searchTreeBinary(chave, &registroBusca, &comp, arqArvore, qtd, &leitura)) {
         printf("Registro encontrado!\n");
-        if (strcmp(flag, "") != 0) {
+        if (strcmp(flag, "[-P]") != 0) {
             printf("Chave: %lld\n", registroBusca.chave);
             printf("Dado 1: %lld\n", registroBusca.dado1);
             printf("Dado 2: %s\n", registroBusca.dado2);
@@ -260,7 +274,6 @@ void binaryTree(int qtd, int situ, long long chave, char flag[]) {
 
     printf("\nNúmero de comparações: %d\n", comp);
     printf("Número de transferências: %d\n", leitura);
-    printf("Tempo de criação do índice: %d\n",0);
     printf("Tempo de pesquisa: %.6lf\n",((double)(fim - inicio)) / CLOCKS_PER_SEC);
     
     fclose(arqArvore);
@@ -315,7 +328,7 @@ void bTree(int qtd, int situ, long long chave, char flag[]) {
 
     long totalLidos = 0;           // Contagem total de registros já lidos
     int registrosRestantes = qtd;  // Quantos ainda faltam processar
-
+    long comp_insere = 0;
     
     // 1) Inicializa uma nova árvore B vazia
     ApontaPagina arv;
@@ -336,13 +349,17 @@ void bTree(int qtd, int situ, long long chave, char flag[]) {
 
         // Insere cada registro lido na árvore
         for (int i = 0; i < lidos; i++) {
-            Insere(buffer[i], &arv);
+            Insere(buffer[i], &arv, &comp_insere);
             totalLidos++;
             registrosRestantes--;
         }
     }
 
     fim_indice = clock();
+
+    printf("Numero de comparações na criação: %ld\n", comp_insere);
+    printf("Tempo de criação do índice: %.6f\n",((double)(fim_indice - inicio_indice)) / CLOCKS_PER_SEC);
+    printf("Número de transferências na criação: %d\n", (int)ceil(qtd / (double)LEITURA_BLOCO));
 
     // Exibe faixa de registros que compõem esta árvore
     printf("Buscando na árvore B \n");
@@ -360,7 +377,7 @@ void bTree(int qtd, int situ, long long chave, char flag[]) {
     if (Pesquisa(&regPesquisa, arv, &comp)) {
         printf("Registro encontrado!\n");
         // Se a flag “-p” foi passada, imprime detalhes do registro
-        if (strcmp(flag, "-p") == 0) {
+        if (strcmp(flag, "[-P]") == 0) {
             printf("Chave: %lld\n", regPesquisa.chave);
             printf("Dado 1: %lld\n", regPesquisa.dado1);
             printf("Dado 2: %s\n", regPesquisa.dado2);
@@ -375,8 +392,7 @@ void bTree(int qtd, int situ, long long chave, char flag[]) {
     fim = clock();
 
     printf("\nNúmero de comparações: %d\n",comp);
-    printf("Número de transferências: %d\n", (int)ceil(qtd / (double)LEITURA_BLOCO));
-    printf("Tempo de criação do índice: %.6f\n",((double)(fim_indice - inicio_indice)) / CLOCKS_PER_SEC);
+    printf("Número de transferências: %d\n", 0);
     printf("Tempo de pesquisa: %.6lf\n",((double)(fim - inicio)) / CLOCKS_PER_SEC);
 
 
@@ -406,6 +422,9 @@ void sequentialSearch(int qtd, int situ, long long chave, char flag[]) {
         printf("Erro na alocação de memória para tabela\n");
         exit(1);
     }
+
+    clock_t inicio_indice, fim_indice;
+    inicio_indice = clock();
 
     FILE *arqComum;
     Registro x[itens_pagina];
@@ -439,6 +458,12 @@ void sequentialSearch(int qtd, int situ, long long chave, char flag[]) {
             return;
     }
 
+    fim_indice = clock();
+
+    printf("Numero de comparações na criação: %d\n", 0);
+    printf("Tempo de criação do índice: %.6f\n",((double)(fim_indice - inicio_indice)) / CLOCKS_PER_SEC);
+    printf("Número de transferências na criação: %d\n", (int)ceil(qtd / (double)itens_pagina));
+
     fseek(arqComum, 0, SEEK_SET);       // Coloca o apontador do arquivo no início
     y.chave = chave;                    // Inicializa um registro com a chave a ser procurada
     
@@ -448,8 +473,8 @@ void sequentialSearch(int qtd, int situ, long long chave, char flag[]) {
     inicio = clock();
 
     if (search(tabela, cont, itens_pagina, &y, arqComum, &comp)) {     // Se a busca for bem sucedida
-        printf("Registro encontrado!\n");
-        if (strcmp(flag,"") != 0){
+        printf("\nRegistro encontrado!\n");
+        if (strcmp(flag,"[-P]") != 0){
             printf("Chave: %lld\n", y.chave);
             printf("Dado 1: %lld\n", y.dado1);
             printf("Dado 2: %s\n", y.dado2);

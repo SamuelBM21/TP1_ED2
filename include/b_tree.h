@@ -15,8 +15,8 @@ void Inicializa(ApontaPagina *arvore);
 void Libera(ApontaPagina *ap);
 int Pesquisa(Registro *x, ApontaPagina ap, int *comp);
 void Imprime(ApontaPagina arvore);
-void InsereNaPagina(ApontaPagina ap, Registro reg, ApontaPagina apDir);
-void Ins(Registro reg, ApontaPagina ap, short *cresceu, Registro *regRetorno, ApontaPagina *apRetorno);
-void Insere(Registro reg, ApontaPagina *ap);
+void InsereNaPagina(ApontaPagina ap, Registro reg, ApontaPagina apDir,  long *comp);
+void Ins(Registro reg, ApontaPagina ap, short *cresceu, Registro *regRetorno, ApontaPagina *apRetorno,  long *comp);
+void Insere(Registro reg, ApontaPagina *ap, long *comp);
 
 #endif //B_TREE_H

@@ -32,7 +32,7 @@ Entrada: Registro para ser inserido e arquivo onde vai ser inserido
 Saída: 1 para sucesso e 0 para erro
 */
 
-int insereArvBin(RegistroArvore inserido, FILE* arq) {
+int insereArvBin(RegistroArvore inserido, FILE* arq, long *leitura, long *comp) {
     fseek(arq, 0, SEEK_END);
     long long posicaoinserido = ftell(arq) / sizeof(RegistroArvore);
 
@@ -49,7 +49,9 @@ int insereArvBin(RegistroArvore inserido, FILE* arq) {
     while (1) {
         fseek(arq, posAtual * sizeof(RegistroArvore), SEEK_SET);
         fread(&atual, sizeof(RegistroArvore), 1, arq);
+        (*leitura)++;
 
+        (*comp)++;
         if (inserido.chave < atual.chave) {
             if (atual.esq == -1) {
                 inserido.esq = inserido.dir = -1;
@@ -67,26 +69,30 @@ int insereArvBin(RegistroArvore inserido, FILE* arq) {
             } else {
                 posAtual = atual.esq;
             }
-        } else if (inserido.chave > atual.chave) {
-            if (atual.dir == -1) {
-                inserido.esq = inserido.dir = -1;
-                atual.dir = posicaoinserido;
+        } else{
+            (*comp)++; // Comparação: inserido.chave > atual.chave
+            if (inserido.chave > atual.chave) {
+                if (atual.dir == -1) {
+                    inserido.esq = inserido.dir = -1;
+                    atual.dir = posicaoinserido;
 
-                // Atualiza o pai
-                fseek(arq, posAtual * sizeof(RegistroArvore), SEEK_SET);
-                fwrite(&atual, sizeof(RegistroArvore), 1, arq);
+                    // Atualiza o pai
+                    fseek(arq, posAtual * sizeof(RegistroArvore), SEEK_SET);
+                    fwrite(&atual, sizeof(RegistroArvore), 1, arq);
 
-                // Insere o novo nó
-                fseek(arq, 0, SEEK_END);
-                fwrite(&inserido, sizeof(RegistroArvore), 1, arq);
+                    // Insere o novo nó
+                    fseek(arq, 0, SEEK_END);
+                    fwrite(&inserido, sizeof(RegistroArvore), 1, arq);
 
-                return 1;
+                    return 1;
+                } else {
+                    posAtual = atual.dir;
+                }
             } else {
-                posAtual = atual.dir;
+                (*comp)++;
+                // Chave já existe, não insere
+                return 0;
             }
-        } else {
-            // Chave já existe, não insere
-            return 0;
         }
     }
 }

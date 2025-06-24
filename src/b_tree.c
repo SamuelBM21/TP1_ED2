@@ -81,11 +81,12 @@ Entrada: Apontador para a página, registro a ser inserido e apontador para a p�
 Saída: --
 */
 
-void InsereNaPagina(ApontaPagina ap, Registro reg, ApontaPagina apDir){
+void InsereNaPagina(ApontaPagina ap, Registro reg, ApontaPagina apDir, long *comp){
     int k = ap->n;                              // Começa no último índice ocupado
     short naoAchouPosicao = (k>0);              // Se a página tiver algum registro
 
     while(naoAchouPosicao){
+        (*comp)++;
         if(reg.chave>=ap->r[k-1].chave){        // Se a posição correta do registro foi encontrada
             naoAchouPosicao=0;
             break;                              // Sai do loop
@@ -111,7 +112,7 @@ Entrada:  Registro a ser inserido, apontador para a raiz ou subárvore onde ser�
 Saída: --  
 */
 
-void Ins(Registro reg, ApontaPagina ap, short *cresceu, Registro *regRetorno, ApontaPagina *apRetorno){
+void Ins(Registro reg, ApontaPagina ap, short *cresceu, Registro *regRetorno, ApontaPagina *apRetorno, long *comp){
     long i=1, j;
     ApontaPagina apTemp;
     if(ap == NULL){                     // Caso base, árvore vazia ou nó folha
@@ -121,21 +122,26 @@ void Ins(Registro reg, ApontaPagina ap, short *cresceu, Registro *regRetorno, Ap
         return;
     }
 
-    while(i<ap->n && reg.chave>ap->r[i-1].chave) i++;       // Busca a posição correta para inserção
-
+    while(i<ap->n && reg.chave>ap->r[i-1].chave){  // Busca a posição correta para inserção
+        i++;
+        (*comp)++;
+    }     
+    (*comp)++;
     if(reg.chave==ap->r[i-1].chave) {                       // Registro já existe, não insere
         *cresceu=0;
         return;
     }
+    (*comp)++;
 
     if(reg.chave<ap->r[i-1].chave) i--;                     // Corrige índice
-
-    Ins(reg, ap->p[i], cresceu, regRetorno, apRetorno);     // Inserção recursiva no filho correspondente
+    (*comp)++;
+    
+    Ins(reg, ap->p[i], cresceu, regRetorno, apRetorno, comp);     // Inserção recursiva no filho correspondente
 
     if(!*cresceu) return;                                   // Se não cresceu, não faz nada
 
     if(ap->n < MM){                                         // Se ainda há espaço na página
-        InsereNaPagina(ap, *regRetorno, *apRetorno);
+        InsereNaPagina(ap, *regRetorno, *apRetorno, comp);
         *cresceu=0;
         return;
     }
@@ -145,15 +151,15 @@ void Ins(Registro reg, ApontaPagina ap, short *cresceu, Registro *regRetorno, Ap
     apTemp->p[0]=NULL;
 
     if(i<M+1){                                              // Se o novo registro for entrar na página original
-        InsereNaPagina(apTemp, ap->r[MM-1], ap->p[MM]);     // Último vai pra nova página
+        InsereNaPagina(apTemp, ap->r[MM-1], ap->p[MM], comp);     // Último vai pra nova página
         ap->n--;                                            // Remove o último da original
-        InsereNaPagina(ap, *regRetorno, *apRetorno);        // Insere o novo registro
+        InsereNaPagina(ap, *regRetorno, *apRetorno, comp);        // Insere o novo registro
     }else {
-        InsereNaPagina(apTemp, *regRetorno, *apRetorno);    // Vai direto na nova página
+        InsereNaPagina(apTemp, *regRetorno, *apRetorno, comp);    // Vai direto na nova página
     }
 
     for(j=M+2; j<=MM; j++) {
-        InsereNaPagina(apTemp, ap->r[j - 1], ap->p[j]);     // Move metade dos registros da página original para a nova
+        InsereNaPagina(apTemp, ap->r[j - 1], ap->p[j], comp);     // Move metade dos registros da página original para a nova
     }
 
     ap->n=M;                        // Reduz número de registros na original
@@ -170,12 +176,12 @@ Entrada: Registro a ser inserido, apontador para a raiz da árvore (passado por 
 Saída: --  
 */
 
-void Insere(Registro reg, ApontaPagina *ap){
+void Insere(Registro reg, ApontaPagina *ap, long *comp){
     short cresceu;
     Registro regRetorno;
     Pagina *apRetorno, *apTemp;
 
-    Ins(reg, *ap, &cresceu, &regRetorno, &apRetorno);       // Chama inserção recursiva
+    Ins(reg, *ap, &cresceu, &regRetorno, &apRetorno, comp);       // Chama inserção recursiva
 
     if(cresceu){                                            // Se a árvore cresceu na raiz
         apTemp = (Pagina*)malloc(sizeof(Pagina));           

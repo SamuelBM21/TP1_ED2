@@ -8,6 +8,6 @@
 int generateFile(long long numLines, const char *nameFile, int mode);
 void numeroPorExtenso(int numero, char *saida);
 void shuffle(long long *array, long long n);
-int binaryTreeGenerator(int qtd);
+int binaryTreeGenerator(int qtd, const char *arqDados, long *read, long *comp);
 
 #endif

@@ -161,11 +161,11 @@ int generateFile(long long numLines, const char *nameFile, int mode) {
 }
 
 
-int binaryTreeGenerator(int qtd) {
+int binaryTreeGenerator(int qtd, const char *arqDados, long *read, long *comp) {
     FILE *arqComum;
 
     
-    arqComum = fopen("dados3.bin", "rb");
+    arqComum = fopen(arqDados, "rb");
     if (arqComum == NULL) {
         printf("Erro ao abrir o arquivo de dados.\n");
         return 0;
@@ -183,19 +183,22 @@ int binaryTreeGenerator(int qtd) {
     Registro bufferRegistros[BUFFER_SIZE];
 
     int totalInseridos = 0;
-    int leitura = 0;
+    
 
     while (totalInseridos < qtd) {
         int restante = qtd - totalInseridos;
         int quantidade = (restante > BUFFER_SIZE) ? BUFFER_SIZE : restante;
 
         size_t lidos = fread(bufferRegistros, sizeof(Registro), quantidade, arqComum);
+        (*read)++;
         if (lidos == 0) break;
 
-        leitura++;
 
         for (size_t i = 0; i < lidos; i++) {
             RegistroArvore regArv;
+
+            memset(&regArv, 0, sizeof(RegistroArvore));
+
             regArv.chave = bufferRegistros[i].chave;
             regArv.dado1 = bufferRegistros[i].dado1;
             strcpy(regArv.dado2, bufferRegistros[i].dado2);
@@ -203,7 +206,7 @@ int binaryTreeGenerator(int qtd) {
             regArv.esq = -1;
             regArv.dir = -1;
 
-            if (insereArvBin(regArv, arqArvore)) {
+            if (insereArvBin(regArv, arqArvore, read, comp)) {
                 totalInseridos++;
             }
 
