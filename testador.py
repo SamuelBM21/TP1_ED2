@@ -69,7 +69,7 @@ with open(saida_csv, mode="w", newline="") as arquivo_csv:
                         str(quantidade),
                         str(situacao),
                         str(chave),
-                        "-p"
+                        "[-P]"
                     ]
                     cmd_str = " ".join(comando)
                     print(f"Executando: {cmd_str}")
