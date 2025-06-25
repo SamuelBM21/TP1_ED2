@@ -238,7 +238,7 @@ void binaryTree(int qtd, int situ, long long chave, char flag[]) {
     
     fim_indice = clock();
 
-    printf("Numero de comparações na criação: %ld\n", comp_indice);
+    printf("\nNumero de comparações na criação: %ld\n", comp_indice);
     printf("Tempo de criação do índice: %.6f\n",((double)(fim_indice - inicio_indice)) / CLOCKS_PER_SEC);
     printf("Número de transferências na criação: %ld\n", leitura_indice);
 
@@ -260,7 +260,7 @@ void binaryTree(int qtd, int situ, long long chave, char flag[]) {
     printf("\nProcurando %lld na árvore binária...\n", chave);
     if (searchTreeBinary(chave, &registroBusca, &comp, arqArvore, qtd, &leitura)) {
         printf("Registro encontrado!\n");
-        if (strcmp(flag, "[-P]") != 0) {
+        if (strcmp(flag, "[-P]") == 0) {
             printf("Chave: %lld\n", registroBusca.chave);
             printf("Dado 1: %lld\n", registroBusca.dado1);
             printf("Dado 2: %s\n", registroBusca.dado2);
@@ -288,7 +288,7 @@ Saída: --
 */
 
 void bTree(int qtd, int situ, long long chave, char flag[]) {
-    printf(">> Buscando em árvore B por blocos...\n\n");
+    printf(">> Criando a árvore B...\n\n");
 
     // Ponteiro para o arquivo de dados original
     FILE *arqComum;
@@ -362,7 +362,7 @@ void bTree(int qtd, int situ, long long chave, char flag[]) {
     printf("Número de transferências na criação: %d\n", (int)ceil(qtd / (double)LEITURA_BLOCO));
 
     // Exibe faixa de registros que compõem esta árvore
-    printf("Buscando na árvore B \n");
+    printf("\nBuscando na árvore B \n");
 
     // Prepara struct de busca apenas com a chave desejada
     Registro regPesquisa;
@@ -460,7 +460,7 @@ void sequentialSearch(int qtd, int situ, long long chave, char flag[]) {
 
     fim_indice = clock();
 
-    printf("Numero de comparações na criação: %d\n", 0);
+    printf("\nNumero de comparações na criação: %d\n", 0);
     printf("Tempo de criação do índice: %.6f\n",((double)(fim_indice - inicio_indice)) / CLOCKS_PER_SEC);
     printf("Número de transferências na criação: %d\n", (int)ceil(qtd / (double)itens_pagina));
 
@@ -474,7 +474,7 @@ void sequentialSearch(int qtd, int situ, long long chave, char flag[]) {
 
     if (search(tabela, cont, itens_pagina, &y, arqComum, &comp)) {     // Se a busca for bem sucedida
         printf("\nRegistro encontrado!\n");
-        if (strcmp(flag,"[-P]") != 0){
+        if (strcmp(flag,"[-P]") == 0){
             printf("Chave: %lld\n", y.chave);
             printf("Dado 1: %lld\n", y.dado1);
             printf("Dado 2: %s\n", y.dado2);
@@ -488,7 +488,6 @@ void sequentialSearch(int qtd, int situ, long long chave, char flag[]) {
 
     printf("\nNúmero de comparações: %d\n",comp);
     printf("Número de transferências: %d\n", max_paginas);
-    printf("Tempo de criação do índice: %d\n",0);
     printf("Tempo de pesquisa: %.6lf\n",((double)(fim - inicio)) / CLOCKS_PER_SEC);
 
     free(tabela);               // Libera a tabela
