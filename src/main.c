@@ -468,11 +468,12 @@ void sequentialSearch(int qtd, int situ, long long chave, char flag[]) {
     y.chave = chave;                    // Inicializa um registro com a chave a ser procurada
     
     int comp = 0;  // Contador de comparações
-    
+    int leitura = 0; // Contador de transferencias
+
     clock_t inicio, fim;
     inicio = clock();
 
-    if (search(tabela, cont, itens_pagina, &y, arqComum, &comp)) {     // Se a busca for bem sucedida
+    if (search(tabela, cont, itens_pagina, &y, arqComum, &comp, &leitura)) {     // Se a busca for bem sucedida
         printf("\nRegistro encontrado!\n");
         if (strcmp(flag,"[-P]") == 0){
             printf("Chave: %lld\n", y.chave);
@@ -487,7 +488,7 @@ void sequentialSearch(int qtd, int situ, long long chave, char flag[]) {
     fim = clock();
 
     printf("\nNúmero de comparações: %d\n",comp);
-    printf("Número de transferências: %d\n", max_paginas);
+    printf("Número de transferências: %d\n", leitura);
     printf("Tempo de pesquisa: %.6lf\n",((double)(fim - inicio)) / CLOCKS_PER_SEC);
 
     free(tabela);               // Libera a tabela

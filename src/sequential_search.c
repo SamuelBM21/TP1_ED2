@@ -61,7 +61,7 @@ Entrada: Tabela dos valores iniciais de cada pagina, tamanho dessa tabela, núme
 Saída: 1 se o registro for encontrado e 0 caso contrário.
 */
 
-int search(long long tab[], int tam, int itens_pagina,  Registro* reg, FILE *arq, int *comp) {
+int search(long long tab[], int tam, int itens_pagina,  Registro* reg, FILE *arq, int *comp, int *leitura) {
     
     Registro* pagina = (Registro*)malloc(itens_pagina * sizeof(Registro));   // Aloca dinamicamente o array de registros
     if (pagina == NULL) {
@@ -96,6 +96,7 @@ int search(long long tab[], int tam, int itens_pagina,  Registro* reg, FILE *arq
         desloc = (i-1)*itens_pagina*sizeof(Registro);                       // Define a posição da página desejada no arquivo
         fseek (arq, desloc, SEEK_SET);
         fread (pagina, sizeof(Registro), quantitens, arq);                  // Lê a página desejada do arquivo
+        (*leitura)++;
 
         int encontrado = binary_search(pagina, quantitens, reg->chave, reg, comp);        // Pesquisa binária na página lida
         free(pagina);                                                               // Libera a memória
