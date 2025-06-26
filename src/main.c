@@ -15,10 +15,10 @@
 #define RANDOMFILE "dados3.bin"
 #define BINARYTREEFILE "binarytree.bin"
 
-void binaryTree(int, int, long long chave, char flag[]);
-void bTree(int, int, long long chave, char flag[]);
-void sequentialSearch(int, int , long long chave, char flag[]);
-void bStarTree(int qtd, int situ, long long chave, char flag[]);
+void binaryTree(int, int, long long chave);
+void bTree(int, int, long long chave);
+void sequentialSearch(int, int , long long chave);
+void bStarTree(int qtd, int situ, long long chave);
 
 int main (int argc, char* argv[]) {
 
@@ -58,17 +58,17 @@ int main (int argc, char* argv[]) {
 
     switch (metodo) {                                           // Qual o método de pesquisa escolhido 
         case 1:
-            sequentialSearch(quantidade,situacao, chave, flag);       // Busca sequencial
+            sequentialSearch(quantidade,situacao, chave);       // Busca sequencial
             break;
         case 2:
-            binaryTree(quantidade,situacao, chave, flag);             // Árvore binária
+            binaryTree(quantidade,situacao, chave);             // Árvore binária
             break;
         case 3:
-            bTree(quantidade, situacao, chave, flag);                 // Árvore B
+            bTree(quantidade, situacao, chave);                 // Árvore B
             break;
         case 4:
 
-        bStarTree(quantidade, situacao, chave, flag);             // Árvore B*
+        bStarTree(quantidade, situacao, chave);             // Árvore B*
             break;
         default:
             printf("Opção inválida. Tente novamente.\n");
@@ -77,6 +77,10 @@ int main (int argc, char* argv[]) {
     fim = clock();
 
     printf("\nTempo de execução: %.6f\n\n",((double)(fim - inicio)) / CLOCKS_PER_SEC);
+
+    if(strcmp(flag,"[-P]") == 0){
+        printRegistrosConsiderados(quantidade, situacao);
+    }
 
     return 0;
 }
@@ -89,7 +93,7 @@ Entrada: Número de registros, tipo do arquivo aberto e a chave a ser procurada.
 Saída: --
 */
 
-void bStarTree(int qtd, int situ, long long chave, char flag[]) {
+void bStarTree(int qtd, int situ, long long chave) {
     printf(">> Criando a árvore B*...\n\n");
 
     // Ponteiro para o arquivo de registros de entrada
@@ -184,13 +188,10 @@ void bStarTree(int qtd, int situ, long long chave, char flag[]) {
     // 3) Executa a pesquisa na árvore do bloco
     if (PesquisaStar(&regPesquisa, arv, &comp)) {
         printf("Registro encontrado!\n");
-        // Se a flag "-p" estiver ativa, exibe o conteúdo completo
-        if (strcmp(flag, "[-P]") == 0) {
-            printf("Chave: %lld\n", regPesquisa.chave);
-            printf("Dado 1: %lld\n", regPesquisa.dado1);
-            printf("Dado 2: %s\n", regPesquisa.dado2);
-            printf("Dado 3: %s\n", regPesquisa.dado3);
-        }
+        printf("Chave: %lld\n", regPesquisa.chave);
+        printf("Dado 1: %lld\n", regPesquisa.dado1);
+        printf("Dado 2: %s\n", regPesquisa.dado2);
+        printf("Dado 3: %s\n", regPesquisa.dado3);
     } else {
         // Se percorreu tudo sem encontrar, avisa o usuário
         printf("Registro não encontrado após percorrer %ld registros.\n", totalLidos);
@@ -217,7 +218,7 @@ Entrada: Número de registros, tipo do arquivo aberto e a chave a ser procurada.
 Saída: --
 */
 
-void binaryTree(int qtd, int situ, long long chave, char flag[]) {
+void binaryTree(int qtd, int situ, long long chave) {
     
     const char *arqDados;
 
@@ -260,12 +261,10 @@ void binaryTree(int qtd, int situ, long long chave, char flag[]) {
     printf("\nProcurando %lld na árvore binária...\n", chave);
     if (searchTreeBinary(chave, &registroBusca, &comp, arqArvore, qtd, &leitura)) {
         printf("Registro encontrado!\n");
-        if (strcmp(flag, "[-P]") == 0) {
-            printf("Chave: %lld\n", registroBusca.chave);
-            printf("Dado 1: %lld\n", registroBusca.dado1);
-            printf("Dado 2: %s\n", registroBusca.dado2);
-            printf("Dado 3: %s\n", registroBusca.dado3);
-        }
+        printf("Chave: %lld\n", registroBusca.chave);
+        printf("Dado 1: %lld\n", registroBusca.dado1);
+        printf("Dado 2: %s\n", registroBusca.dado2);
+        printf("Dado 3: %s\n", registroBusca.dado3);
     } else {
         printf("Registro não encontrado.\n");
     }
@@ -287,7 +286,7 @@ Entrada: Número de registros, tipo do arquivo aberto e a chave a ser procurada.
 Saída: --
 */
 
-void bTree(int qtd, int situ, long long chave, char flag[]) {
+void bTree(int qtd, int situ, long long chave) {
     printf(">> Criando a árvore B...\n\n");
 
     // Ponteiro para o arquivo de dados original
@@ -376,13 +375,10 @@ void bTree(int qtd, int situ, long long chave, char flag[]) {
     // 3) Pesquisa na árvore
     if (Pesquisa(&regPesquisa, arv, &comp)) {
         printf("Registro encontrado!\n");
-        // Se a flag “-p” foi passada, imprime detalhes do registro
-        if (strcmp(flag, "[-P]") == 0) {
-            printf("Chave: %lld\n", regPesquisa.chave);
-            printf("Dado 1: %lld\n", regPesquisa.dado1);
-            printf("Dado 2: %s\n", regPesquisa.dado2);
-            printf("Dado 3: %s\n", regPesquisa.dado3);
-        }
+        printf("Chave: %lld\n", regPesquisa.chave);
+        printf("Dado 1: %lld\n", regPesquisa.dado1);
+        printf("Dado 2: %s\n", regPesquisa.dado2);
+        printf("Dado 3: %s\n", regPesquisa.dado3);
     } else {
         // Se percorreu tudo sem encontrar, avisa
         printf("Registro não encontrado após percorrer %ld registros.\n", totalLidos);
@@ -410,7 +406,7 @@ Entrada: Número de registros, tipo do arquivo aberto e a chave a ser procurada.
 Saída: --
 */
 
-void sequentialSearch(int qtd, int situ, long long chave, char flag[]) {
+void sequentialSearch(int qtd, int situ, long long chave) {
     printf(">> Executando busca sequencial...\n");
 
     int itens_pagina = define_page_size(qtd);                       // Define o número de itens por página
@@ -445,7 +441,7 @@ void sequentialSearch(int qtd, int situ, long long chave, char flag[]) {
         
             break;
         case 2:             // Caso o arquivo desejado seja ordenado descendentemente
-            printf("Esse método só funciona para arquivos ordenados descendentemente.\n");
+            printf("Esse método só funciona para arquivos ordenados ascendentemente.\n");
             free(tabela);   // Libera a tabela
             return;
         case 3:             // Caso o arquivo desejado seja aleatório
@@ -475,12 +471,10 @@ void sequentialSearch(int qtd, int situ, long long chave, char flag[]) {
 
     if (search(tabela, cont, itens_pagina, &y, arqComum, &comp, &leitura)) {     // Se a busca for bem sucedida
         printf("\nRegistro encontrado!\n");
-        if (strcmp(flag,"[-P]") == 0){
-            printf("Chave: %lld\n", y.chave);
-            printf("Dado 1: %lld\n", y.dado1);
-            printf("Dado 2: %s\n", y.dado2);
-            printf("Dado 3: %s\n", y.dado3);
-        }
+        printf("Chave: %lld\n", y.chave);
+        printf("Dado 1: %lld\n", y.dado1);
+        printf("Dado 2: %s\n", y.dado2);
+        printf("Dado 3: %s\n", y.dado3);
     } else {                                                    // Se não for bem sucedida
         printf("Registro não encontrado!\n");
     }

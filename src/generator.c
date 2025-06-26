@@ -6,6 +6,11 @@
 #include "register.h"
 #include "file_binary_tree.h"
 
+#define ASCENDINGFILE "dados1.bin"
+#define DESCENDINGFILE "dados2.bin"
+#define RANDOMFILE "dados3.bin"
+#define BINARYTREEFILE "binarytree.bin"
+
 void numeroPorExtenso(int numero, char *saida) {
     const char *unidades[] = {"", "um", "dois", "três", "quatro", "cinco", "seis", "sete", "oito", "nove"};
     const char *dezenas1[] = {"dez", "onze", "doze", "treze", "quatorze", "quinze", "dezesseis", "dezessete", "dezoito", "dezenove"};
@@ -223,4 +228,49 @@ int binaryTreeGenerator(int qtd, const char *arqDados, long *read, long *comp) {
     fclose(arqArvore);
 
     return 1;
+}
+
+
+
+void printRegistrosConsiderados(int qtd, int situacao){
+    FILE *arqComum;
+
+    const char *nomeArquivo;
+    switch (situacao) {
+        case 1: nomeArquivo = ASCENDINGFILE;  break;  
+        case 2: nomeArquivo = DESCENDINGFILE; break; 
+        case 3: nomeArquivo = RANDOMFILE;    break; 
+        default:
+            printf("Opção de situação de arquivo inválida.\n");
+            return;
+    }
+    
+    arqComum = fopen(nomeArquivo, "rb");
+    if (arqComum == NULL) {
+        printf("Erro ao abrir o arquivo de dados.\n");
+        return;
+    }
+
+    printf(">> Mostrando as chaves presentes em %d registros do arquivo:\n",qtd);
+
+    Registro bufferRegistros[BUFFER_SIZE];
+
+    int total = 0;
+    
+
+    while (total < qtd) {
+        int restante = qtd - total;
+        int quantidade = (restante > BUFFER_SIZE) ? BUFFER_SIZE : restante;
+
+        size_t lidos = fread(bufferRegistros, sizeof(Registro), quantidade, arqComum);
+        if (lidos == 0) break;
+
+        for (size_t i = 0; i < lidos; i++) {
+            printf("Chave %d do arquivo: %lld\n", total+1, bufferRegistros[i].chave);
+            total++;
+        }
+    }
+
+    fclose(arqComum);
+    return;
 }
